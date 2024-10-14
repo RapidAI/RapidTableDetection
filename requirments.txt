@@ -1,0 +1,5 @@
+paddlepaddle>=3.0.0b0
+numpy
+Pillow
+opencv-python
+onnxruntime

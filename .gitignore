@@ -1,3 +1,7 @@
 /models/
 /images/
 /outputs/
+/rapid_table_det_gpu/models/db_net/*.pd*
+/rapid_table_det_gpu/models/obj_det/*.pd*
+/rapid_table_det_gpu/models/pplcnet/*.pd*
+/rapid_table_det_gpu/outputs/
