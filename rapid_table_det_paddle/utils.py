@@ -1,8 +1,7 @@
 import math
-import os
 from io import BytesIO
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 import itertools
 import cv2
 import numpy as np
@@ -14,7 +13,7 @@ InputType = Union[str, np.ndarray, bytes, Path]
 
 class LoadImage:
     def __init__(
-            self,
+        self,
     ):
         pass
 
@@ -103,6 +102,9 @@ class LoadImage:
             raise LoadImageError(f"{file_path} does not exist.")
 
 
+img_loader = LoadImage()
+
+
 class LoadImageError(Exception):
     pass
 
@@ -138,16 +140,9 @@ def generate_scale(im, resize_shape, keep_ratio):
 
 def resize(im, im_info, resize_shape, keep_ratio, interp=2):
     im_scale_y, im_scale_x = generate_scale(im, resize_shape, keep_ratio)
-    im = cv2.resize(
-        im,
-        None,
-        None,
-        fx=im_scale_x,
-        fy=im_scale_y,
-        interpolation=interp)
-    im_info['im_shape'] = np.array(im.shape[:2]).astype('float32')
-    im_info['scale_factor'] = np.array(
-        [im_scale_y, im_scale_x]).astype('float32')
+    im = cv2.resize(im, None, None, fx=im_scale_x, fy=im_scale_y, interpolation=interp)
+    im_info["im_shape"] = np.array(im.shape[:2]).astype("float32")
+    im_info["scale_factor"] = np.array([im_scale_y, im_scale_x]).astype("float32")
 
     return im, im_info
 
@@ -177,7 +172,9 @@ def ResizePad(img, target_size):
     bottom = (target_size - new_h) - top
     left = (target_size - new_w) // 2
     right = (target_size - new_w) - left
-    img1 = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+    img1 = cv2.copyMakeBorder(
+        img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(255, 255, 255)
+    )
     return img1, new_w, new_h, left, top
 
 
@@ -199,9 +196,7 @@ def get_mini_boxes(contour):
         index_2 = 3
         index_3 = 2
 
-    box = [
-        points[index_1], points[index_2], points[index_3], points[index_4]
-    ]
+    box = [points[index_1], points[index_2], points[index_3], points[index_4]]
     return box, min(bounding_box[1])
 
 
@@ -316,13 +311,16 @@ def get_inv(concat):
     c = concat[1][0]
     d = concat[1][1]
     det_concat = a * d - b * c
-    inv_result = np.array([[d / det_concat, -b / det_concat],
-                           [-c / det_concat, a / det_concat]])
+    inv_result = np.array(
+        [[d / det_concat, -b / det_concat], [-c / det_concat, a / det_concat]]
+    )
     return inv_result
 
 
 def get_max_adjacent_bbox(mask):
-    contours, _ = cv2.findContours((mask * 255).astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(
+        (mask * 255).astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+    )
     max_size = 0
     cnt_save = None
     # 找到最大边缘邻接矩形
@@ -348,18 +346,24 @@ def get_max_adjacent_bbox(mask):
         return np.array(target_box).reshape([-1, 2])
 
 
-def visuallize(img_path, box, lt, rt, rb, lb):
-    img = cv2.imread(img_path)
-    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+def visuallize(img, box, lt, rt, rb, lb):
+    # img = cv2.imread(img_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     xmin, ymin, xmax, ymax = box
     draw_box = np.array([lt, rt, rb, lb]).reshape([-1, 2])
     cv2.circle(img, (int(lt[0]), int(lt[1])), 50, (255, 0, 0), 10)
     cv2.rectangle(img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (255, 0, 0), 10)
-    cv2.polylines(img, [np.array(draw_box).astype(np.int32).reshape((-1, 1, 2))], True,
-                  color=(255, 0, 255), thickness=6)
+    cv2.polylines(
+        img,
+        [np.array(draw_box).astype(np.int32).reshape((-1, 1, 2))],
+        True,
+        color=(255, 0, 255),
+        thickness=6,
+    )
     return img
 
-def extract_table_img(img_path, lt, rt, rb, lb):
+
+def extract_table_img(img, lt, rt, rb, lb):
     """
     根据四个角点进行透视变换，并提取出角点区域的图片。
 
@@ -373,8 +377,7 @@ def extract_table_img(img_path, lt, rt, rb, lb):
     返回:
     numpy.ndarray: 提取出的角点区域图片
     """
-    img = cv2.imread(img_path)
-    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     # 源点坐标
     src_points = np.float32([lt, rt, lb, rb])
 
@@ -387,7 +390,14 @@ def extract_table_img(img_path, lt, rt, rb, lb):
     height_b = np.sqrt(((lt[0] - lb[0]) ** 2) + ((lt[1] - lb[1]) ** 2))
     max_height = max(int(height_a), int(height_b))
 
-    dst_points = np.float32([[0, 0], [max_width - 1, 0], [0, max_height - 1], [max_width - 1, max_height - 1]])
+    dst_points = np.float32(
+        [
+            [0, 0],
+            [max_width - 1, 0],
+            [0, max_height - 1],
+            [max_width - 1, max_height - 1],
+        ]
+    )
 
     # 获取透视变换矩阵
     M = cv2.getPerspectiveTransform(src_points, dst_points)
@@ -396,5 +406,3 @@ def extract_table_img(img_path, lt, rt, rb, lb):
     warped = cv2.warpPerspective(img, M, (max_width, max_height))
 
     return warped
-
-

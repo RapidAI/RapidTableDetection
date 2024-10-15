@@ -26,11 +26,13 @@ class ObjectDetector:
         img, im_shape, factor = self.img_preprocess(img, self.resize_shape)
         pre = self.model([img, factor])
         result = []
-        for item in pre[0].numpy():
+        for item in pre[0]:
             cls, value, xmin, ymin, xmax, ymax = list(item)
             if value < score:
                 continue
-            cls, xmin, ymin, xmax, ymax = [int(x) for x in [cls, xmin, ymin, xmax, ymax]]
+            cls, xmin, ymin, xmax, ymax = [
+                int(x) for x in [cls, xmin, ymin, xmax, ymax]
+            ]
             xmin = max(xmin, 0)
             ymin = max(ymin, 0)
             xmax = min(xmax, ori_w)
@@ -41,17 +43,16 @@ class ObjectDetector:
     def img_preprocess(self, img, resize_shape=[928, 928]):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         im_info = {
-            'scale_factor': np.array(
-                [1., 1.], dtype=np.float32),
-            'im_shape': np.array(img.shape[:2], dtype=np.float32),
+            "scale_factor": np.array([1.0, 1.0], dtype=np.float32),
+            "im_shape": np.array(img.shape[:2], dtype=np.float32),
         }
         im, im_info = resize(img, im_info, resize_shape, False)
         im, im_info = pad(im, im_info, resize_shape)
         im = im / 255.0
         im = im.transpose((2, 0, 1)).copy()
         im = im[None, :]
-        factor = im_info['scale_factor'].reshape((1, 2))
-        im_shape = im_info['im_shape'].reshape((1, 2))
+        factor = im_info["scale_factor"].reshape((1, 2))
+        im_shape = im_info["im_shape"].reshape((1, 2))
         return im, im_shape, factor
 
 
@@ -77,14 +78,18 @@ class DbNet:
         # todo 注意还有crop的偏移
         if box is not None:
             # 根据缩放调整坐标适配输入的img大小
-            adjusted_box = self.adjust_coordinates(box, left, top, resize_w, resize_h, destWidth, destHeight)
+            adjusted_box = self.adjust_coordinates(
+                box, left, top, resize_w, resize_h, destWidth, destHeight
+            )
             # 排序并裁剪负值
             lt, lb, rt, rb = self.sort_and_clip_coordinates(adjusted_box)
             return box, lt, lb, rt, rb, time.time() - start
         else:
             return None, None, None, None, None, time.time() - start
 
-    def adjust_coordinates(self, box, left, top, resize_w, resize_h, destWidth, destHeight):
+    def adjust_coordinates(
+        self, box, left, top, resize_w, resize_h, destWidth, destHeight
+    ):
         """
         调整边界框坐标，确保它们在合理范围内。
 
@@ -104,11 +109,13 @@ class DbNet:
         """
         # 调整横坐标
         box[:, 0] = np.clip(
-            (np.round(box[:, 0] - left) / resize_w * destWidth), 0, destWidth)
+            (np.round(box[:, 0] - left) / resize_w * destWidth), 0, destWidth
+        )
 
         # 调整纵坐标
         box[:, 1] = np.clip(
-            (np.round(box[:, 1] - top) / resize_h * destHeight), 0, destHeight)
+            (np.round(box[:, 1] - top) / resize_h * destHeight), 0, destHeight
+        )
         return box
 
     def sort_and_clip_coordinates(self, box):
@@ -151,7 +158,7 @@ class DbNet:
         im = im / 255.0
         im = im.transpose((2, 0, 1)).copy()
         # im = paddle.to_tensor(im, dtype='float32')
-        im = im[None, :].astype('float32')
+        im = im[None, :].astype("float32")
         return im, new_h, new_w, left, top
 
 
@@ -167,7 +174,7 @@ class PPLCNet:
         # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = self.img_preprocess(img, self.resize_shape)
         # with paddle.no_grad():
-            # print(cls_img.shape)
+        # print(cls_img.shape)
         label = self.model([img])[0]
         label = label[None, :]
         mini_batch_result = np.argsort(label)
@@ -182,4 +189,4 @@ class PPLCNet:
         im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
         im = np.array(im).transpose((2, 0, 1)) / 255.0
         # im = paddle.to_tensor(im)
-        return im[None, :].astype('float32')
+        return im[None, :].astype("float32")

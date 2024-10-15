@@ -1,4 +1,4 @@
-paddlepaddle
+paddlepaddle-gpu
 numpy
 Pillow
 opencv-python
