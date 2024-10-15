@@ -2,8 +2,8 @@ import time
 
 import cv2
 import numpy as np
-from paddle_predictor import DbNet, ObjectDetector, PPLCNet
-from utils import LoadImage
+from rapid_table_det.predictor import DbNet, ObjectDetector, PPLCNet
+from rapid_table_det.utils import LoadImage
 
 
 class TableDetector:
@@ -24,13 +24,9 @@ class TableDetector:
         img_mask = img.copy()
         h, w = img.shape[:-1]
         img_box = np.array([1, 1, w - 1, h - 1])
-        x1, y1, x2, y2 = img_box
-        lt = np.array([x1, y1])  # 左上角
-        lb = np.array([x1, y2])  # 左下角
-        rt = np.array([x2, y1])  # 右上角
-        rb = np.array([x2, y2])  # 右下角
+        lb, lt, rb, rt = self.get_box_points(img_box)
         # 初始化默认值
-        obj_det_res, edge_box, pred_label = [[1.0, img_box]], img_box, 0
+        obj_det_res, edge_box, pred_label = [[1.0, img_box]], img_box.reshape([-1, 2]), 0
         result = []
         obj_det_elapse, edge_elapse, rotate_det_elapse = 0, 0 , 0
         if self.use_obj_det:
@@ -39,6 +35,8 @@ class TableDetector:
              det_res = obj_det_res[i]
              score, box = det_res
              xmin, ymin, xmax, ymax = box
+             edge_box = box.reshape([-1, 2]),
+             lb, lt, rb, rt = self.get_box_points(box)
              if self.use_edge_det:
                  xmin_edge, ymin_edge, xmax_edge, ymax_edge = self.pad_box_points(h, w, xmax, xmin, ymax, ymin, 10)
                  crop_img = img_mask[ymin_edge:ymax_edge, xmin_edge:xmax_edge, :]
@@ -70,6 +68,14 @@ class TableDetector:
              })
         elapse = [obj_det_elapse, edge_elapse, rotate_det_elapse]
         return result, elapse
+
+    def get_box_points(self, img_box):
+        x1, y1, x2, y2 = img_box
+        lt = np.array([x1, y1])  # 左上角
+        rt = np.array([x2, y1])  # 右上角
+        rb = np.array([x2, y2])  # 右下角
+        lb = np.array([x1, y2])  # 左下角
+        return lb, lt, rb, rt
 
     def get_real_rotated_points(self, lb, lt, pred_label, rb, rt):
         if pred_label == 0:

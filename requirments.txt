@@ -1,4 +1,4 @@
-paddlepaddle>=3.0.0b0
+paddlepaddle
 numpy
 Pillow
 opencv-python

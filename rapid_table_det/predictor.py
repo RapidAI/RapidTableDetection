@@ -1,27 +1,20 @@
-import os
 import time
 
-import cv2
-import paddle
-import math
-import itertools
-import numpy as np
-from PIL import Image
-from utils import *
+from rapid_table_det.utils import *
 
 MODEL_STAGES_PATTERN = {
     "PPLCNet": ["blocks2", "blocks3", "blocks4", "blocks5", "blocks6"]
 }
-root_dir = Path(__file__).resolve().parent.parent
+root_dir = Path(__file__).resolve().parent
 root_dir_str = str(root_dir)
-obj_model_path = f"{root_dir_str}/models/obj_det/model"
-dbnet_model_path = f"{root_dir_str}/models/db_net/model"
-pplcnet_model_path = f"{root_dir_str}/models/pplcnet/model"
+obj_model_path = f"{root_dir_str}/obj_det.onnx"
+dbnet_model_path = f"{root_dir_str}/edge_det.onnx"
+pplcnet_model_path = f"{root_dir_str}/cls_det.onnx"
 
 
 class ObjectDetector:
     def __init__(self, model_path=obj_model_path, **kwargs):
-        self.model = paddle.jit.load(model_path)
+        self.model = OrtInferSession(model_path)
         self.img_loader = LoadImage()
         self.resize_shape = [928, 928]
 
@@ -31,7 +24,7 @@ class ObjectDetector:
         img = self.img_loader(img)
         ori_h, ori_w = img.shape[:-1]
         img, im_shape, factor = self.img_preprocess(img, self.resize_shape)
-        pre = self.model(img, factor)
+        pre = self.model([img, factor])
         result = []
         for item in pre[0].numpy():
             cls, value, xmin, ymin, xmax, ymax = list(item)
@@ -46,26 +39,25 @@ class ObjectDetector:
         return result, time.time() - start
 
     def img_preprocess(self, img, resize_shape=[928, 928]):
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         im_info = {
             'scale_factor': np.array(
                 [1., 1.], dtype=np.float32),
             'im_shape': np.array(img.shape[:2], dtype=np.float32),
         }
         im, im_info = resize(img, im_info, resize_shape, False)
-        # im, im_info = pad(im, im_info, resize_shape)
+        im, im_info = pad(im, im_info, resize_shape)
         im = im / 255.0
         im = im.transpose((2, 0, 1)).copy()
-        im = paddle.to_tensor(im, dtype='float32')
-        im = im.unsqueeze(0)
-        factor = paddle.to_tensor(im_info['scale_factor']).reshape((1, 2)).astype('float32')
-        im_shape = paddle.to_tensor(im_info['im_shape'].reshape((1, 2)), dtype='float32')
+        im = im[None, :]
+        factor = im_info['scale_factor'].reshape((1, 2))
+        im_shape = im_info['im_shape'].reshape((1, 2))
         return im, im_shape, factor
 
 
 class DbNet:
     def __init__(self, model_path=dbnet_model_path, **kwargs):
-        self.model = paddle.jit.load(model_path)
+        self.model = OrtInferSession(model_path)
         self.img_loader = LoadImage()
         self.resize_shape = [800, 800]
 
@@ -74,10 +66,10 @@ class DbNet:
         img = self.img_loader(img)
         destHeight, destWidth = img.shape[:-1]
         img, resize_h, resize_w, left, top = self.img_preprocess(img, self.resize_shape)
-        with paddle.no_grad():
-            predicts = self.model(img)
-        predict_maps = predicts.cpu()
-        pred = predict_maps[0, 0].numpy()
+        # with paddle.no_grad():
+        predict_maps = self.model([img])
+        # predict_maps = predicts.cpu()
+        pred = np.squeeze(predict_maps[0])
         segmentation = pred > 0.7
         mask = np.array(segmentation).astype(np.uint8)
         # 找到最佳边缘box shape(4, 2)
@@ -158,14 +150,14 @@ class DbNet:
         im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
         im = im / 255.0
         im = im.transpose((2, 0, 1)).copy()
-        im = paddle.to_tensor(im, dtype='float32')
-        im = im.unsqueeze(0)
+        # im = paddle.to_tensor(im, dtype='float32')
+        im = im[None, :].astype('float32')
         return im, new_h, new_w, left, top
 
 
 class PPLCNet:
     def __init__(self, model_path=pplcnet_model_path, **kwargs):
-        self.model = paddle.jit.load(model_path)
+        self.model = OrtInferSession(model_path)
         self.img_loader = LoadImage()
         self.resize_shape = [624, 624]
 
@@ -174,10 +166,10 @@ class PPLCNet:
         img = self.img_loader(img)
         # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = self.img_preprocess(img, self.resize_shape)
-        with paddle.no_grad():
+        # with paddle.no_grad():
             # print(cls_img.shape)
-            label = self.model(img)
-        label = label.unsqueeze(0).numpy()
+        label = self.model([img])[0]
+        label = label[None, :]
         mini_batch_result = np.argsort(label)
         mini_batch_result = mini_batch_result[0][-1]  # 把这些列标拿出来
         mini_batch_result = mini_batch_result.flatten()  # 拉平了，只吐出一个 array
@@ -188,6 +180,6 @@ class PPLCNet:
     def img_preprocess(self, img, resize_shape=[624, 624]):
         # resize_width = 624
         im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
-        im = np.array(im).astype('float32').transpose((2, 0, 1)) / 255.0
-        im = paddle.to_tensor(im)
-        return im.unsqueeze(0)
+        im = np.array(im).transpose((2, 0, 1)) / 255.0
+        # im = paddle.to_tensor(im)
+        return im[None, :].astype('float32')

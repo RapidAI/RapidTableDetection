@@ -1,22 +1,15 @@
-import os
 import time
-
-import cv2
 import paddle
-import math
-import itertools
-import numpy as np
-from PIL import Image
-from utils import *
+from rapid_table_det_paddle.utils import *
 
 MODEL_STAGES_PATTERN = {
     "PPLCNet": ["blocks2", "blocks3", "blocks4", "blocks5", "blocks6"]
 }
-cur_dir = Path(__file__).resolve().parent
-cur_dir_str = str(cur_dir)
-obj_model_path = f"{cur_dir_str}/models/obj_det/model"
-dbnet_model_path = f"{cur_dir_str}/models/db_net/model"
-pplcnet_model_path = f"{cur_dir_str}/models/pplcnet/model"
+root_dir = Path(__file__).resolve().parent
+root_dir_str = str(root_dir)
+obj_model_path = f"{root_dir_str}/models/obj_det/model"
+dbnet_model_path = f"{root_dir_str}/models/db_net/model"
+pplcnet_model_path = f"{root_dir_str}/models/pplcnet/model"
 
 
 class ObjectDetector:
