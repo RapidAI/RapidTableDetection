@@ -39,14 +39,13 @@ class ObjectDetector:
         return result, time.time() - start
 
     def img_preprocess(self, img, resize_shape=[928, 928]):
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         im_info = {
             'scale_factor': np.array(
                 [1., 1.], dtype=np.float32),
             'im_shape': np.array(img.shape[:2], dtype=np.float32),
         }
         im, im_info = resize(img, im_info, resize_shape, False)
-        # im, im_info = pad(im, im_info, resize_shape)
+        im, im_info = pad(im, im_info, resize_shape)
         im = im / 255.0
         im = im.transpose((2, 0, 1)).copy()
         im = paddle.to_tensor(im, dtype='float32')
@@ -147,7 +146,6 @@ class DbNet:
         return lt, lb, rt, rb
 
     def img_preprocess(self, img, resize_shape=[800, 800]):
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
         im = im / 255.0
         im = im.transpose((2, 0, 1)).copy()
@@ -165,10 +163,8 @@ class PPLCNet:
     def __call__(self, img, **kwargs):
         start = time.time()
         img = self.img_loader(img)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = self.img_preprocess(img, self.resize_shape)
         with paddle.no_grad():
-            # print(cls_img.shape)
             label = self.model(img)
         label = label.unsqueeze(0).numpy()
         mini_batch_result = np.argsort(label)
@@ -179,7 +175,6 @@ class PPLCNet:
         return pred_label, time.time() - start
 
     def img_preprocess(self, img, resize_shape=[624, 624]):
-        # resize_width = 624
         im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
         im = np.array(im).astype('float32').transpose((2, 0, 1)) / 255.0
         im = paddle.to_tensor(im)

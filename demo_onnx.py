@@ -5,15 +5,14 @@ import cv2
 from rapid_table_det.inference import TableDetector
 from rapid_table_det.utils import visuallize, extract_table_img, img_loader
 
-img_path = f"images/web1.png"
+img_path = f"images/page8.jpg"
 file_name_with_ext = os.path.basename(img_path)
 file_name, file_ext = os.path.splitext(file_name_with_ext)
 out_dir = "rapid_table_det/outputs"
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 table_det = TableDetector(
-    obj_model_path="rapid_table_det/models/modified_obj_det.onnx",
-    # obj_model_path="rapid_table_det/models/obj_det.onnx",
+    obj_model_path="rapid_table_det/models/obj_det.onnx",
     edge_model_path="rapid_table_det/models/edge_det.onnx",
     cls_model_path="rapid_table_det/models/cls_det.onnx",
     use_obj_det=True,

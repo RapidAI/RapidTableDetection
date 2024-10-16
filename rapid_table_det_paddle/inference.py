@@ -26,7 +26,7 @@ class TableDetector:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_mask = img.copy()
         h, w = img.shape[:-1]
-        img_box = np.array([1, 1, w - 1, h - 1])
+        img_box = np.array([0, 0, w, h])
         lb, lt, rb, rt = self.get_box_points(img_box)
         # 初始化默认值
         obj_det_res, edge_box, pred_label = (
@@ -63,7 +63,7 @@ class TableDetector:
                 )
             if self.use_rotate_det:
                 xmin_cls, ymin_cls, xmax_cls, ymax_cls = self.pad_box_points(
-                    h, w, xmax, xmin, ymax, ymin, 10
+                    h, w, xmax, xmin, ymax, ymin, 5
                 )
                 cls_box = edge_box.copy()
                 cls_img = img_mask[ymin_cls:ymax_cls, xmin_cls:xmax_cls, :]

@@ -3,9 +3,9 @@ import os
 import cv2
 
 from rapid_table_det_paddle.inference import TableDetector
-from rapid_table_det_paddle.utils import visuallize, extract_table_img, img_loader, pad_image_with_white
+from rapid_table_det_paddle.utils import visuallize, extract_table_img, img_loader
 
-img_path = f"images/table_crop_0.jpg"
+img_path = f"images/image (31).png"
 file_name_with_ext = os.path.basename(img_path)
 file_name, file_ext = os.path.splitext(file_name_with_ext)
 out_dir = "rapid_table_det_paddle/outputs"
@@ -26,7 +26,6 @@ print(
 )
 # 一张图片中可能有多个表格
 img = img_loader(img_path)
-img = pad_image_with_white(img)
 extract_img = img.copy()
 for i, res in enumerate(result):
     box = res["box"]
