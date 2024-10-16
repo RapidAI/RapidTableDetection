@@ -1,6 +1,6 @@
 <div align="center">
   <div align="center">
-    <h1><b>📊 表格结构识别</b></h1>
+    <h1><b>📊 RapidTableExtractor</b></h1>
   </div>
   <a href=""><img src="https://img.shields.io/badge/Python->=3.8,<3.12-aff.svg"></a>
   <a href=""><img src="https://img.shields.io/badge/OS-Linux%2C%20Mac%2C%20Win-pink.svg"></a>
@@ -14,16 +14,21 @@
     - 完成初版代码，包含目标检测，语义分割，角点方向识别三个模块
 
 ### 简介
-复杂场景下的表格提取方案，同时支持高精度的paddle推理和量化小模型的onnx推理,为下游 ocr/表格识别/数据采集 提供强力支撑
-采用项目 [百度表格检测大赛](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL) 的实现方案，补充大量真实场景数据再训练
-![img.png](readme_resource/structure.png)
+👍🏻强大且高效🛫的表格的开源方案，支持论文，期刊，杂志等多表格场景，发票，收据，签到单等复杂背景
 
-#### 特点
-- ⚡ 论文，期刊，杂志等多表格场景
-- ⚡ 发票，收据，签到单等复杂背景
-- ⚡ 旋转任意角度+透视修正
-- ⚡ 支持任意模型再训练+onnx导出，无缝转换各个模型
-- ⚡ cpu/gpu 支持，单图推理2s以内
+🎉同时支持高精度的paddle版本和量化onnx模型版本，单图cpu推理1.5s, paddle-gpu 0.2s
+
+💪🏻支持三个模块自由组合，独立训练调优，提供onnx转换脚本+微调训练方案
+
+💪🏻whl包轻松集成使用，为下游 ocr/表格识别/数据采集 提供强力支撑
+
+📚参考项目 [百度表格检测大赛第2名方案](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL) 的实现方案，补充大量真实场景数据再训练
+![img.png](readme_resource/structure.png)
+👇🏻训练数据集在致谢， 希望大家点个⭐️支持一下
+
+### 在线体验
+
+
 ### 效果展示
 ![res_show.jpg](readme_resource/res_show.jpg)![res_show2.jpg](readme_resource/res_show2.jpg)
 ### 安装
@@ -79,11 +84,27 @@ for i, res in enumerate(result):
 cv2.imwrite(f"{out_dir}/{file_name}-visualize.jpg", img)
 ```
 
-### TODO List
+## FAQ (Frequently Asked Questions)
+
+1. **问：如何微调模型适应特定场景?**
+    - 答：直接参考这个项目，有非常详细的可视化操作步骤,可以得到paddle的推理模型 [百度表格检测大赛](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL) 
+
+2. **问：如何导出onnx**
+   - 答：在本项目tools下，有onnx_transform.ipynb文件，可以照步骤执行(因为pp-yoloe导出onnx有bug一直没修，这里我自己写了一个fix_onnx2脚本改动onnx模型节点来临时解决了)
+
+3. **问：图片有扭曲可以修正吗？**
+    - 答：本项目只解决旋转和透视场景的表格提取，对于扭曲的场景，需要先进行扭曲修正
 
 ### 致谢
-[百度表格检测大赛](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL)
+[百度表格检测大赛第2名方案](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL)
 
+[WTW 自然场景表格数据集](https://tianchi.aliyun.com/dataset/108587)
+
+[FinTabNet PDF文档表格数据集](https://developer.ibm.com/exchanges/data/all/fintabnet/)
+
+[TableBank 表格数据集](https://doc-analysis.github.io/tablebank-page/)
+
+[TableGeneration 表格自动生成工具](https://github.com/WenmuZhou/TableGeneration)
 ### 贡献指南
 
 欢迎提交请求。对于重大更改，请先打开issue讨论您想要改变的内容。
