@@ -3,3 +3,5 @@ numpy
 Pillow
 opencv-python
 onnxruntime
+requests
+tqdm
