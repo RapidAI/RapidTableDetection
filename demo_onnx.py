@@ -34,6 +34,6 @@ for i, res in enumerate(result):
     # 带识别框和左上角方向位置
     img = visuallize(img, box, lt, rt, rb, lb)
     # 透视变换提取表格图片
-    extract_img = extract_table_img(extract_img.copy(), lt, rt, rb, lb)
-    cv2.imwrite(f"{out_dir}/{file_name}-extract-{i}.jpg", extract_img)
+    wrapped_img = extract_table_img(extract_img.copy(), lt, rt, rb, lb)
+    cv2.imwrite(f"{out_dir}/{file_name}-extract-{i}.jpg", wrapped_img)
 cv2.imwrite(f"{out_dir}/{file_name}-visualize.jpg", img)

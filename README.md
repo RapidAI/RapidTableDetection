@@ -15,8 +15,8 @@
 
 ### 简介
 复杂场景下的表格提取方案，同时支持高精度的paddle推理和量化小模型的onnx推理,为下游 ocr/表格识别/数据采集 提供强力支撑
-采用项目[百度表格检测大赛](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL)的实现方案，补充大量真实场景数据再训练
-![img.png](structure.png)
+采用项目 [百度表格检测大赛](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL) 的实现方案，补充大量真实场景数据再训练
+![img.png](readme_resource/structure.png)
 
 #### 特点
 - ⚡ 论文，期刊，杂志等多表格场景
@@ -25,7 +25,7 @@
 - ⚡ 支持任意模型再训练+onnx导出，无缝转换各个模型
 - ⚡ cpu/gpu 支持，单图推理2s以内
 ### 效果展示
-![res_show.jpg](res_show.jpg)![res_show2.jpg](res_show2.jpg)
+![res_show.jpg](readme_resource/res_show.jpg)![res_show2.jpg](readme_resource/res_show2.jpg)
 ### 安装
 ``` python {linenos=table}
 

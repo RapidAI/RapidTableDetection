@@ -77,7 +77,7 @@ for node in model.graph.node:
         node.input[1] = new_squeeze_components_10[1].output[0]
 
 # 保存修改后的模型
-modified_model_path = os.path.join(model_dir, "modified_obj_det.onnx")
+modified_model_path = os.path.join(model_dir, "obj_det.onnx")
 onnx.save(model, modified_model_path)
 
 # 使用 onnx-check 验证模型
