@@ -6,3 +6,5 @@
 /rapid_table_det_paddle/models/pplcnet/*.pd*
 /rapid_table_det_paddle/outputs/
 /rapid_table_det/outputs/
+/rapid_table_det/models/*onnx
+/tools/.ipynb_checkpoints/
