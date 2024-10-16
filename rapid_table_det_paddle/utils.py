@@ -347,8 +347,6 @@ def get_max_adjacent_bbox(mask):
 
 
 def visuallize(img, box, lt, rt, rb, lb):
-    # img = cv2.imread(img_path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     xmin, ymin, xmax, ymax = box
     draw_box = np.array([lt, rt, rb, lb]).reshape([-1, 2])
     cv2.circle(img, (int(lt[0]), int(lt[1])), 50, (255, 0, 0), 10)
@@ -377,7 +375,6 @@ def extract_table_img(img, lt, rt, rb, lb):
     返回:
     numpy.ndarray: 提取出的角点区域图片
     """
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     # 源点坐标
     src_points = np.float32([lt, rt, lb, rb])
 
@@ -404,5 +401,4 @@ def extract_table_img(img, lt, rt, rb, lb):
 
     # 应用透视变换
     warped = cv2.warpPerspective(img, M, (max_width, max_height))
-
     return warped

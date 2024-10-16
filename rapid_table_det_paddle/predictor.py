@@ -39,7 +39,7 @@ class ObjectDetector:
         return result, time.time() - start
 
     def img_preprocess(self, img, resize_shape=[928, 928]):
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         im_info = {
             'scale_factor': np.array(
                 [1., 1.], dtype=np.float32),
@@ -147,7 +147,7 @@ class DbNet:
         return lt, lb, rt, rb
 
     def img_preprocess(self, img, resize_shape=[800, 800]):
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
         im = im / 255.0
         im = im.transpose((2, 0, 1)).copy()
@@ -165,7 +165,7 @@ class PPLCNet:
     def __call__(self, img, **kwargs):
         start = time.time()
         img = self.img_loader(img)
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = self.img_preprocess(img, self.resize_shape)
         with paddle.no_grad():
             # print(cls_img.shape)
