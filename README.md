@@ -1,6 +1,6 @@
 <div align="center">
   <div align="center">
-    <h1><b>📊 RapidTableExtractor</b></h1>
+    <h1><b>📊TableExtractor</b></h1>
   </div>
   <a href=""><img src="https://img.shields.io/badge/Python->=3.8,<3.12-aff.svg"></a>
   <a href=""><img src="https://img.shields.io/badge/OS-Linux%2C%20Mac%2C%20Win-pink.svg"></a>
@@ -36,26 +36,24 @@
 ### 效果展示
 ![res_show.jpg](readme_resource/res_show.jpg)![res_show2.jpg](readme_resource/res_show2.jpg)
 ### 安装
-🪜下载你的场景需要的模型，放到你的场景该放的地方 [modescope模型仓](https://www.modelscope.cn/models/jockerK/TableExtractor)
+🪜下载喜欢的模型，放到喜欢的地方 [modescope模型仓](https://www.modelscope.cn/models/jockerK/TableExtractor)
 ``` python {linenos=table}
 # 建议使用清华源安装 https://pypi.tuna.tsinghua.edu.cn/simple
 pip install rapid_table_det-onnx
 pip install rapid_table_det_paddle (默认安装gpu版本，可以自行覆盖安装cpu版本paddlepaddle)
 ```
 ### 快速使用
-除了引入包不同，其他完全一样,不做在一起，是希望你需要哪个包就安装哪个
-
-#### onnx版本
+只有引入包不一样
 ``` python {linenos=table}
 import os
 import cv2
 from rapid_table_det.inference import TableDetector
 from rapid_table_det.utils import visuallize, extract_table_img, img_loader
+#from rapid_table_det_paddle.inference import TableDetector
+#from rapid_table_det_paddle.utils import visuallize, extract_table_img, img_loader
+
 img_path = f"images/page8.jpg"
 table_det = TableDetector(
-    obj_model_path="rapid_table_det/models/obj_det.onnx",
-    edge_model_path="rapid_table_det/models/edge_det.onnx",
-    cls_model_path="rapid_table_det/models/cls_det.onnx",
     use_obj_det=True,
     use_edge_det=True,
     use_rotate_det=True,
@@ -84,44 +82,11 @@ print(
 # cv2.imwrite(f"{out_dir}/{file_name}-visualize.jpg", img)
 
 ```
-#### paddle版本
-``` python {linenos=table}
-import os
-import cv2
-from rapid_table_det_paddle.inference import TableDetector
-from rapid_table_det_paddle.utils import visuallize, extract_table_img, img_loader
-img_path = f"images/image (31).png"
-table_det = TableDetector(
-    obj_model_path="rapid_table_det_paddle/models/obj_det/model",
-    edge_model_path="rapid_table_det_paddle/models/db_net/model",
-    cls_model_path="rapid_table_det_paddle/models/pplcnet/model",
-    use_obj_det=True,
-    use_edge_det=True,
-    use_rotate_det=True,
-)
-result, elapse = table_det(img_path)
-obj_det_elapse, edge_elapse, rotate_det_elapse = elapse
-print(
-    f"obj_det_elapse:{obj_det_elapse}, edge_elapse={edge_elapse}, rotate_det_elapse={rotate_det_elapse}"
-)
-# 可视化结果
-# img = img_loader(img_path)
-# file_name_with_ext = os.path.basename(img_path)
-# file_name, file_ext = os.path.splitext(file_name_with_ext)
-# out_dir = "rapid_table_det_paddle/outputs"
-# if not os.path.exists(out_dir):
-#     os.makedirs(out_dir)
-# extract_img = img.copy()
-# for i, res in enumerate(result):
-#     box = res["box"]
-#     lt, rt, rb, lb = res["lt"], res["rt"], res["rb"], res["lb"]
-#     # 带识别框和左上角方向位置
-#     img = visuallize(img, box, lt, rt, rb, lb)
-#     # 透视变换提取表格图片
-#     wrapped_img = extract_table_img(extract_img.copy(), lt, rt, rb, lb)
-#     cv2.imwrite(f"{out_dir}/{file_name}-extract-{i}.jpg", wrapped_img)
-# cv2.imwrite(f"{out_dir}/{file_name}-visualize.jpg", img)
-```
+#### 参数说明
+mode: str 模式，onnx包默认使用onnx_tiny,可选 onnx, paddle包唯一使用paddle \
+obj_model_path:str 目标检测模型地址 \
+edge_model_path:str 语义分割模型地址 \
+cls_model_path:str 方向分类模型地址
 
 ## FAQ (Frequently Asked Questions)
 
