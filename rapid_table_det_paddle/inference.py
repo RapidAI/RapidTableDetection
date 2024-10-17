@@ -1,25 +1,62 @@
+import os
+from pathlib import Path
+
 import cv2
 import numpy as np
+
+from rapid_table_det_paddle.download import maybe_download
 from rapid_table_det_paddle.predictor import DbNet, ObjectDetector, PPLCNet
 from rapid_table_det_paddle.utils import LoadImage
+
+MODEL_URLS = {
+    "paddle": {
+        "obj_det_paddle": "https://github.com/Joker1212/RapidTableDetection/releases/download/v0.0.0/obj_det_paddle.zip",
+        "edge_det_paddle": "https://github.com/Joker1212/RapidTableDetection/releases/download/v0.0.0/edge_det_paddle.zip",
+        "cls_det_paddle": "https://github.com/Joker1212/RapidTableDetection/releases/download/v0.0.0/cls_det_paddle.zip",
+    }
+}
+root_dir = Path(__file__).resolve().parent
+model_dir = os.path.join(root_dir, "models")
 
 
 class TableDetector:
     def __init__(
-        self, edge_model_path=None, obj_model_path=None, cls_model_path=None, **kwargs
+        self,
+        mode="paddle",
+        edge_model_path=None,
+        obj_model_path=None,
+        cls_model_path=None,
+        use_obj_det=True,
+        use_edge_det=True,
+        use_cls_det=True,
     ):
-        self.use_obj_det = kwargs.get("use_obj_det", True)
-        self.use_edge_det = kwargs.get("use_edge_det", True)
-        self.use_rotate_det = kwargs.get("use_rotate_det", True)
+        self.use_obj_det = use_obj_det
+        self.use_edge_det = use_edge_det
+        self.use_cls_det = use_cls_det
         self.img_loader = LoadImage()
         if self.use_obj_det:
-            self.obj_detector = (
-                ObjectDetector(obj_model_path) if obj_model_path else ObjectDetector()
+            model_path = self.get_or_download_model(
+                obj_model_path, mode, ObjectDetector.model_key
             )
+            self.obj_detector = ObjectDetector(model_path)
         if self.use_edge_det:
-            self.dbnet = DbNet(edge_model_path) if edge_model_path else DbNet()
-        if self.use_rotate_det:
-            self.pplcnet = PPLCNet(cls_model_path) if cls_model_path else PPLCNet()
+            model_path = self.get_or_download_model(
+                edge_model_path, mode, DbNet.model_key
+            )
+            self.dbnet = DbNet(model_path)
+        if self.use_cls_det:
+            model_path = self.get_or_download_model(
+                cls_model_path, mode, PPLCNet.model_key
+            )
+            self.pplcnet = PPLCNet(model_path)
+
+    def get_or_download_model(self, model_path, mode, model_key):
+        if model_path is None or not os.path.exists(model_path):
+            url = MODEL_URLS[mode][model_key]
+            maybe_download(model_dir, url)
+            model_name = url.split("/")[-1].split(".")[0]
+            return os.path.join(model_dir, model_name)
+        return model_path
 
     def __call__(self, img, det_accuracy=0.4):
         img = self.img_loader(img)

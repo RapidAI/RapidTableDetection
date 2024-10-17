@@ -1,16 +1,7 @@
-import os
-import cv2
 from rapid_table_det.inference import TableDetector
-from rapid_table_det.utils import visuallize, extract_table_img, img_loader
-img_path = f"images/page8.jpg"
-table_det = TableDetector(
-    obj_model_path="rapid_table_det/models/obj_det.onnx",
-    edge_model_path="rapid_table_det/models/edge_det.onnx",
-    cls_model_path="rapid_table_det/models/cls_det.onnx",
-    use_obj_det=True,
-    use_edge_det=True,
-    use_rotate_det=True,
-)
+
+img_path = f"images/img_1.png"
+table_det = TableDetector()
 result, elapse = table_det(img_path)
 obj_det_elapse, edge_elapse, rotate_det_elapse = elapse
 print(

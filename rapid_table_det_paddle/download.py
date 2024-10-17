@@ -37,7 +37,7 @@ def get_logger():
 # 获取当前脚本文件的目录
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
 # 设置存储的根路径
-MODELS_DIR = os.path.abspath(os.path.join(current_file_dir, "../models"))
+MODELS_DIR = os.path.abspath(os.path.join(current_file_dir, "models"))
 
 
 def download_with_progressbar(url, save_path):
@@ -83,31 +83,3 @@ def maybe_download(model_storage_directory, url):
             zipObj.extractall(path=model_storage_directory)
 
     os.remove(tmp_path)
-
-
-def maybe_download_params(model_path):
-    if os.path.exists(model_path) or not is_link(model_path):
-        return model_path
-    else:
-        url = model_path
-    tmp_path = os.path.join(MODELS_DIR, url.split("/")[-1])
-    logger = get_logger()
-    logger.info(f"download {url} to {tmp_path}")
-    os.makedirs(MODELS_DIR, exist_ok=True)
-    download_with_progressbar(url, tmp_path)
-    return tmp_path
-
-
-def is_link(s):
-    return s is not None and s.startswith("http")
-
-
-def confirm_model_dir_url(model_dir, default_model_dir, default_url):
-    url = default_url
-    if model_dir is None or is_link(model_dir):
-        if is_link(model_dir):
-            url = model_dir
-        file_name = url.split("/")[-1][:-4]
-        model_dir = default_model_dir
-        model_dir = os.path.join(model_dir, file_name)
-    return model_dir, url

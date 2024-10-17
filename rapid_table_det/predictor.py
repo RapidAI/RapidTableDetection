@@ -7,13 +7,16 @@ MODEL_STAGES_PATTERN = {
 }
 root_dir = Path(__file__).resolve().parent
 root_dir_str = str(root_dir)
-obj_model_path = f"{root_dir_str}/obj_det.onnx"
-dbnet_model_path = f"{root_dir_str}/edge_det.onnx"
-pplcnet_model_path = f"{root_dir_str}/cls_det.onnx"
+# https://github.com/RapidAI/TableStructureRec/releases/download/v0.0.0/lineless_table_rec_models.zip
+# obj_model_path = f"{root_dir_str}/obj_det.onnx"
+# dbnet_model_path = f"{root_dir_str}/edge_det.onnx"
+# pplcnet_model_path = f"{root_dir_str}/cls_det.onnx"
 
 
 class ObjectDetector:
-    def __init__(self, model_path=obj_model_path, **kwargs):
+    model_key = "obj_det"
+
+    def __init__(self, model_path, **kwargs):
         self.model = OrtInferSession(model_path)
         self.img_loader = LoadImage()
         self.resize_shape = [928, 928]
@@ -56,7 +59,9 @@ class ObjectDetector:
 
 
 class DbNet:
-    def __init__(self, model_path=dbnet_model_path, **kwargs):
+    model_key = "edge_det"
+
+    def __init__(self, model_path, **kwargs):
         self.model = OrtInferSession(model_path)
         self.img_loader = LoadImage()
         self.resize_shape = [800, 800]
@@ -160,7 +165,9 @@ class DbNet:
 
 
 class PPLCNet:
-    def __init__(self, model_path=pplcnet_model_path, **kwargs):
+    model_key = "cls_det"
+
+    def __init__(self, model_path, **kwargs):
         self.model = OrtInferSession(model_path)
         self.img_loader = LoadImage()
         self.resize_shape = [624, 624]
