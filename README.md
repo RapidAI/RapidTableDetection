@@ -41,13 +41,12 @@
 ``` python {linenos=table}
 # 建议使用清华源安装 https://pypi.tuna.tsinghua.edu.cn/simple
 pip install rapid-table-det
-#pip install rapid-table-det-paddle (默认安装gpu版本，可以自行覆盖安装cpu版本paddlepaddle)
 ```
 ### 快速使用
 ``` python {linenos=table}
 from rapid_table_det.inference import TableDetector
-img_path = f"tests/test_files/chip.jpg"
 table_det = TableDetector()
+img_path = f"tests/test_files/chip.jpg"
 result, elapse = table_det(img_path)
 obj_det_elapse, edge_elapse, rotate_det_elapse = elapse
 print(
@@ -74,6 +73,19 @@ print(
 #     cv2.imwrite(f"{out_dir}/{file_name}-extract-{i}.jpg", wrapped_img)
 # cv2.imwrite(f"{out_dir}/{file_name}-visualize.jpg", img)
 
+```
+### gpu版本使用
+``` python {linenos=table}
+# 建议使用清华源安装 https://pypi.tuna.tsinghua.edu.cn/simple
+pip install rapid-table-det-paddle (默认安装gpu版本，可以自行覆盖安装cpu版本paddlepaddle)
+```
+```python
+#from rapid_table_det_paddle.inference import TableDetector
+#table_det = TableDetector(
+#    obj_model_path="rapid_table_det_paddle/models/obj_det_paddle",
+#    edge_model_path="rapid_table_det_paddle/models/edge_det_paddle",
+#    cls_model_path="rapid_table_det_paddle/models/cls_det_paddle",
+#)
 ```
 #### 参数说明
 mode: str 模式，onnx包默认使用onnx_tiny,可选 onnx, paddle包唯一使用paddle \
