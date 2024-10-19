@@ -63,9 +63,7 @@ jobs:
           unzip cls_det_paddle.zip
           unzip obj_det_paddle.zip
           unzip edge_det_paddle.zip
-          mv cls_det_paddle/*.pd* rapid_table_det_paddle/models/
-          mv obj_det_paddle/*.pd* rapid_table_det_paddle/models/
-          mv edge_det_paddle/*.pd* rapid_table_det_paddle/models/
+          mv *.pd* rapid_table_det_paddle/models/
 
           python setup_rapid_table_det_paddle.py bdist_wheel "${{ github.ref_name }}"
 
