@@ -33,11 +33,9 @@ jobs:
           unzip cls_det_paddle.zip
           unzip obj_det_paddle.zip
           unzip edge_det_paddle.zip
-          mv cls_det_paddle/*.pd* rapid_table_det_paddle/models/
-          mv obj_det_paddle/*.pd* rapid_table_det_paddle/models/
-          mv edge_det_paddle/*.pd* rapid_table_det_paddle/models/
-
-          pytest tests/test_det_paddle.py
+          mv *.pd* rapid_table_det_paddle/models/
+         
+          pytest tests/test_table_det_paddle.py
 
   GenerateWHL_PushPyPi:
     needs: UnitTesting
