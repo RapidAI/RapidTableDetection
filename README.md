@@ -118,10 +118,22 @@ print(
 
 ```
 #### 参数说明
-mode: str 模式，onnx包默认使用onnx_tiny,可选 onnx, paddle包唯一使用paddle \
-obj_model_path:str 目标检测模型地址 \
-edge_model_path:str 语义分割模型地址 \
-cls_model_path:str 方向分类模型地址
+```
+table_det = TableDetector(\
+# 目标检测表格模型
+obj_model_path="models/obj_det_paddle(obj_det.onnx)", \ 
+# 边角检测表格模型(从复杂环境得到表格多边形框)
+edge_model_path="models/edge_det_paddle(edge_det.onnx)", \
+# 角点方向识别
+cls_model_path="models/cls_det_paddle(cls_det.onnx)", \
+# 文档场景已经由版面识别模型提取可以不使用
+use_obj_det=True, \
+# 只有90，180，270大角度旋转且无透视时候可以不使用
+use_edge_det=True, \
+# 小角度(-90~90)旋转可以不使用
+use_cls_det=True, \
+)
+```
 
 ## FAQ (Frequently Asked Questions)
 
