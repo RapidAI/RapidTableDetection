@@ -23,7 +23,7 @@ jobs:
 
       - name: Unit testings
         run: |
-          pip install -r rapid_table_det/requirements.txt
+          pip install -r requirements.txt
           pip install pytest
 
           wget https://github.com/Joker1212/RapidTableDetection/releases/download/v0.0.0/cls_det.zip

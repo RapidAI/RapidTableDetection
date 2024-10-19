@@ -23,7 +23,8 @@ jobs:
 
       - name: Unit testings
         run: |
-          pip install -r rapid_table_det_paddle/requirements.txt
+          pip install -r requirements.txt
+          pip install paddlepaddle 
           pip install pytest
 
           wget https://github.com/Joker1212/RapidTableDetection/releases/download/v0.0.0/cls_det_paddle.zip
@@ -54,6 +55,7 @@ jobs:
       - name: Run setup.py
         run: |
           pip install -r requirements.txt
+          pip install paddlepaddle
           python -m pip install --upgrade pip
           pip install wheel get_pypi_latest_version
 
