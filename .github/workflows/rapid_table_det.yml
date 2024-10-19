@@ -63,10 +63,7 @@ jobs:
           unzip cls_det.zip
           unzip obj_det_quantized.zip
           unzip edge_det_quantized.zip
-          mv cls_det/*.onnx rapid_table_det/models/
-          mv obj_det_quantized/*.onnx rapid_table_det/models/
-          mv edge_det_quantized/*.onnx rapid_table_det/models/
-
+          mv *.onnx rapid_table_det/models/
           python setup_lineless.py bdist_wheel "${{ github.ref_name }}"
 
       - name: Publish distribution 📦 to PyPI
