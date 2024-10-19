@@ -1,7 +1,10 @@
 from rapid_table_det.inference import TableDetector
 
 img_path = f"tests/test_files/chip2.jpg"
-table_det = TableDetector()
+table_det = TableDetector(
+    obj_model_path="rapid_table_det/models/obj_det.onnx",
+    edge_model_path="rapid_table_det/models/edge_det.onnx",
+)
 result, elapse = table_det(img_path)
 obj_det_elapse, edge_elapse, rotate_det_elapse = elapse
 print(

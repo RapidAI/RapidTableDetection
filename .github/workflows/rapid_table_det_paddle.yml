@@ -67,7 +67,7 @@ jobs:
           mv obj_det_paddle/*.pd* rapid_table_det_paddle/models/
           mv edge_det_paddle/*.pd* rapid_table_det_paddle/models/
 
-          python setup_lineless.py bdist_wheel "${{ github.ref_name }}"
+          python setup_rapid_table_det_paddle.py bdist_wheel "${{ github.ref_name }}"
 
       - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@v1.5.0

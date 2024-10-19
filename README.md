@@ -41,7 +41,7 @@
 ``` python {linenos=table}
 # 建议使用清华源安装 https://pypi.tuna.tsinghua.edu.cn/simple
 pip install rapid_table_det-onnx
-pip install rapid_table_det_paddle (默认安装gpu版本，可以自行覆盖安装cpu版本paddlepaddle)
+#pip install rapid_table_det_paddle (默认安装gpu版本，可以自行覆盖安装cpu版本paddlepaddle)
 ```
 ### 快速使用
 ``` python {linenos=table}
