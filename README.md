@@ -40,8 +40,8 @@
 🪜下载模型 [modescope模型仓](https://www.modelscope.cn/models/jockerK/TableExtractor) [release assets](https://github.com/Joker1212/RapidTableDetection/releases/tag/v0.0.0)
 ``` python {linenos=table}
 # 建议使用清华源安装 https://pypi.tuna.tsinghua.edu.cn/simple
-pip install rapid_table_det
-#pip install rapid_table_det_paddle (默认安装gpu版本，可以自行覆盖安装cpu版本paddlepaddle)
+pip install rapid-table-det
+#pip install rapid-table-det-paddle (默认安装gpu版本，可以自行覆盖安装cpu版本paddlepaddle)
 ```
 ### 快速使用
 ``` python {linenos=table}
