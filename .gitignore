@@ -1,12 +1,9 @@
 /models/
 /images/
 /outputs/
-/rapid_table_det_paddle/models/db_net/*.pd*
-/rapid_table_det_paddle/models/obj_det/*.pd*
-/rapid_table_det_paddle/models/pplcnet/*.pd*
+/rapid_table_det_paddle/models/*.pd*
 /rapid_table_det_paddle/outputs/
 /rapid_table_det/outputs/
 /rapid_table_det/models/*onnx
 /tools/.ipynb_checkpoints/
-/rapid_table_det_paddle/models/
 /.ipynb_checkpoints/
