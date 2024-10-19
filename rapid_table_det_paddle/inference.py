@@ -1,28 +1,13 @@
-import os
-from pathlib import Path
-
 import cv2
 import numpy as np
 
-from rapid_table_det_paddle.download import maybe_download
 from rapid_table_det_paddle.predictor import DbNet, ObjectDetector, PPLCNet
 from rapid_table_det_paddle.utils import LoadImage
-
-MODEL_URLS = {
-    "paddle": {
-        "obj_det_paddle": "https://github.com/Joker1212/RapidTableDetection/releases/download/v0.0.0/obj_det_paddle.zip",
-        "edge_det_paddle": "https://github.com/Joker1212/RapidTableDetection/releases/download/v0.0.0/edge_det_paddle.zip",
-        "cls_det_paddle": "https://github.com/Joker1212/RapidTableDetection/releases/download/v0.0.0/cls_det_paddle.zip",
-    }
-}
-root_dir = Path(__file__).resolve().parent
-model_dir = os.path.join(root_dir, "models")
 
 
 class TableDetector:
     def __init__(
         self,
-        mode="paddle",
         edge_model_path=None,
         obj_model_path=None,
         cls_model_path=None,
@@ -35,30 +20,13 @@ class TableDetector:
         self.use_cls_det = use_cls_det
         self.img_loader = LoadImage()
         if self.use_obj_det:
-            model_path = self.get_or_download_model(
-                obj_model_path, mode, ObjectDetector.model_key
-            )
-            self.obj_detector = ObjectDetector(model_path)
+            self.obj_detector = ObjectDetector(obj_model_path)
         if self.use_edge_det:
-            model_path = self.get_or_download_model(
-                edge_model_path, mode, DbNet.model_key
-            )
-            self.dbnet = DbNet(model_path)
+            self.dbnet = DbNet(edge_model_path)
         if self.use_cls_det:
-            model_path = self.get_or_download_model(
-                cls_model_path, mode, PPLCNet.model_key
-            )
-            self.pplcnet = PPLCNet(model_path)
+            self.pplcnet = PPLCNet(cls_model_path)
 
-    def get_or_download_model(self, model_path, mode, model_key):
-        if model_path is None or not os.path.exists(model_path):
-            url = MODEL_URLS[mode][model_key]
-            maybe_download(model_dir, url)
-            model_name = url.split("/")[-1].split(".")[0]
-            return os.path.join(model_dir, model_name)
-        return model_path
-
-    def __call__(self, img, det_accuracy=0.4):
+    def __call__(self, img, det_accuracy=0.7):
         img = self.img_loader(img)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_mask = img.copy()
@@ -98,7 +66,7 @@ class TableDetector:
                     rt + [xmin_edge, ymin_edge],
                     rb + [xmin_edge, ymin_edge],
                 )
-            if self.use_rotate_det:
+            if self.use_cls_det:
                 xmin_cls, ymin_cls, xmax_cls, ymax_cls = self.pad_box_points(
                     h, w, xmax, xmin, ymax, ymin, 5
                 )

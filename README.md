@@ -36,34 +36,27 @@
 ### 效果展示
 ![res_show.jpg](readme_resource/res_show.jpg)![res_show2.jpg](readme_resource/res_show2.jpg)
 ### 安装
-🪜下载喜欢的模型，放到喜欢的地方 [modescope模型仓](https://www.modelscope.cn/models/jockerK/TableExtractor)
+🪜下载模型 [modescope模型仓](https://www.modelscope.cn/models/jockerK/TableExtractor) [release assets](![car-invoice-img02310.jpg](images%2Fcar-invoice-img02310.jpg))
 ``` python {linenos=table}
 # 建议使用清华源安装 https://pypi.tuna.tsinghua.edu.cn/simple
+为简化使用，已经将最小的量化模型打包到 rapid_table_det-onnx 中，需要更高精度或gpu推理，请自行下载对应模型
 pip install rapid_table_det-onnx
 pip install rapid_table_det_paddle (默认安装gpu版本，可以自行覆盖安装cpu版本paddlepaddle)
 ```
 ### 快速使用
-只有引入包不一样
 ``` python {linenos=table}
-import os
-import cv2
 from rapid_table_det.inference import TableDetector
-from rapid_table_det.utils import visuallize, extract_table_img, img_loader
-#from rapid_table_det_paddle.inference import TableDetector
-#from rapid_table_det_paddle.utils import visuallize, extract_table_img, img_loader
-
-img_path = f"images/page8.jpg"
-table_det = TableDetector(
-    use_obj_det=True,
-    use_edge_det=True,
-    use_rotate_det=True,
-)
+img_path = f"tests/test_files/chip.jpg"
+table_det = TableDetector()
 result, elapse = table_det(img_path)
 obj_det_elapse, edge_elapse, rotate_det_elapse = elapse
 print(
     f"obj_det_elapse:{obj_det_elapse}, edge_elapse={edge_elapse}, rotate_det_elapse={rotate_det_elapse}"
 )
-# 可视化结果
+# 输出可视化
+# import os
+# import cv2
+# from rapid_table_det.utils import img_loader, visuallize, extract_table_img
 # img = img_loader(img_path)
 # file_name_with_ext = os.path.basename(img_path)
 # file_name, file_ext = os.path.splitext(file_name_with_ext)
