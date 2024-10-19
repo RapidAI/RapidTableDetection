@@ -82,11 +82,23 @@ pip install rapid-table-det-paddle (默认安装gpu版本，可以自行覆盖�
 ```
 ```python
 from rapid_table_det_paddle.inference import TableDetector
+
+img_path = f"tests/test_files/chip.jpg"
+
 table_det = TableDetector(
     obj_model_path="models/obj_det_paddle",
     edge_model_path="models/edge_det_paddle",
     cls_model_path="models/cls_det_paddle",
+    use_obj_det=True,
+    use_edge_det=True,
+    use_cls_det=True,
 )
+result, elapse = table_det(img_path)
+obj_det_elapse, edge_elapse, rotate_det_elapse = elapse
+print(
+    f"obj_det_elapse:{obj_det_elapse}, edge_elapse={edge_elapse}, rotate_det_elapse={rotate_det_elapse}"
+)
+# 一张图片中可能有多个表格
 # img = img_loader(img_path)
 # file_name_with_ext = os.path.basename(img_path)
 # file_name, file_ext = os.path.splitext(file_name_with_ext)
@@ -103,6 +115,7 @@ table_det = TableDetector(
 #     wrapped_img = extract_table_img(extract_img.copy(), lt, rt, rb, lb)
 #     cv2.imwrite(f"{out_dir}/{file_name}-extract-{i}.jpg", wrapped_img)
 # cv2.imwrite(f"{out_dir}/{file_name}-visualize.jpg", img)
+
 ```
 #### 参数说明
 mode: str 模式，onnx包默认使用onnx_tiny,可选 onnx, paddle包唯一使用paddle \
