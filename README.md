@@ -14,7 +14,7 @@
     - 完成初版代码，包含目标检测，语义分割，角点方向识别三个模块
 
 ### 简介
-💡✨ 强大且高效的表格提取，支持论文、期刊、杂志、发票、收据、签到单等各种表格。
+💡✨ 强大且高效的表格检测，支持论文、期刊、杂志、发票、收据、签到单等各种表格。
 
 🚀 支持高精度 Paddle 版本和量化 ONNX 版本，单图 CPU 推理仅需 1.5 秒，Paddle-GPU(V100) 仅需 0.2 秒。
 
@@ -36,7 +36,7 @@
 ### 效果展示
 ![res_show.jpg](readme_resource/res_show.jpg)![res_show2.jpg](readme_resource/res_show2.jpg)
 ### 安装
-为简化使用，已经将最小的量化模型打包到 rapid_table_det-onnx 中，需要更高精度或gpu推理，请自行下载对应模型
+为简化使用，已经将最小的量化模型打包到 rapid_table_det 中，需要更高精度或gpu推理，请自行下载对应模型
 🪜下载模型 [modescope模型仓](https://www.modelscope.cn/models/jockerK/TableExtractor) [release assets](https://github.com/Joker1212/RapidTableDetection/releases/tag/v0.0.0)
 ``` python {linenos=table}
 # 建议使用清华源安装 https://pypi.tuna.tsinghua.edu.cn/simple
