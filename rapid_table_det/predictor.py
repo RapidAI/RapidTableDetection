@@ -73,8 +73,11 @@ class DbNet:
         img, resize_h, resize_w, left, top = self.img_preprocess(img, self.resize_shape)
         # with paddle.no_grad():
         predict_maps = self.model([img])
+        pred = self.postprocess(predict_maps)
+        if pred is None:
+            return None, None, None, None, None, time.time() - start
         # predict_maps = predicts.cpu()
-        pred = np.squeeze(predict_maps[0])
+        # pred = np.squeeze(predict_maps[0])
         segmentation = pred > 0.7
         mask = np.array(segmentation).astype(np.uint8)
         # 找到最佳边缘box shape(4, 2)
@@ -92,7 +95,7 @@ class DbNet:
             return None, None, None, None, None, time.time() - start
 
     def adjust_coordinates(
-        self, box, left, top, resize_w, resize_h, destWidth, destHeight
+            self, box, left, top, resize_w, resize_h, destWidth, destHeight
     ):
         """
         调整边界框坐标，确保它们在合理范围内。
@@ -162,6 +165,31 @@ class DbNet:
         im = im.transpose((2, 0, 1)).copy()
         im = im[None, :].astype("float32")
         return im, new_h, new_w, left, top
+
+    def postprocess(self, predict_maps):
+        box_output = predict_maps[0]
+        mask_output = predict_maps[1]
+        predictions = np.squeeze(box_output).T
+        # Filter out object confidence scores below threshold
+        scores = predictions[:, 4]
+        # 获取得分最高的索引
+        highest_score_index = scores.argmax()
+        # 获取得分最高的预测结果
+        highest_score_prediction = predictions[highest_score_index]
+        highest_score = highest_score_prediction[4]
+        if highest_score < 0.7:
+            return None
+        mask_predictions = highest_score_prediction[5:]
+        mask_predictions = np.expand_dims(mask_predictions, axis=0)
+        mask_output = np.squeeze(mask_output)
+        # Calculate the mask maps for each box
+        num_mask, mask_height, mask_width = mask_output.shape  # CHW
+        masks = sigmoid(mask_predictions @ mask_output.reshape((num_mask, -1)))
+        masks = masks.reshape((-1, mask_height, mask_width))
+        # 提取第一个通道
+        mask = masks[0]
+        # 使用 OpenCV 进行放大，保持边缘清晰
+        return cv2.resize(mask, (800, 800), interpolation=cv2.INTER_NEAREST)
 
 
 class PPLCNet:

@@ -475,3 +475,6 @@ def extract_table_img(img, lt, rt, rb, lb):
     warped = cv2.warpPerspective(img, M, (max_width, max_height))
 
     return warped
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
