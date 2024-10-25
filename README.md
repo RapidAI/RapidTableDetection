@@ -42,6 +42,26 @@
 # 建议使用清华源安装 https://pypi.tuna.tsinghua.edu.cn/simple
 pip install rapid-table-det
 ```
+
+#### 参数说明
+cpu和gpu的初始化完全一致
+```
+table_det = TableDetector(
+# 目标检测表格模型
+obj_model_path="models/obj_det_paddle(obj_det.onnx)", 
+# 边角检测表格模型(从复杂环境得到表格多边形框)
+edge_model_path="models/edge_det_paddle(edge_det.onnx)", 
+# 角点方向识别
+cls_model_path="models/cls_det_paddle(cls_det.onnx)", 
+# 文档场景已经由版面识别模型提取设置为False
+use_obj_det=True, 
+# 只有90，180，270大角度旋转且无透视时候设置为False
+use_edge_det=True, 
+# 小角度(-90~90)旋转设置为False
+use_cls_det=True, 
+)
+```
+
 ### 快速使用
 ``` python {linenos=table}
 from rapid_table_det.inference import TableDetector
@@ -117,23 +137,7 @@ print(
 # cv2.imwrite(f"{out_dir}/{file_name}-visualize.jpg", img)
 
 ```
-#### 参数说明
-```
-table_det = TableDetector(\
-# 目标检测表格模型
-obj_model_path="models/obj_det_paddle(obj_det.onnx)", \ 
-# 边角检测表格模型(从复杂环境得到表格多边形框)
-edge_model_path="models/edge_det_paddle(edge_det.onnx)", \
-# 角点方向识别
-cls_model_path="models/cls_det_paddle(cls_det.onnx)", \
-# 文档场景已经由版面识别模型提取可以不使用
-use_obj_det=True, \
-# 只有90，180，270大角度旋转且无透视时候可以不使用
-use_edge_det=True, \
-# 小角度(-90~90)旋转可以不使用
-use_cls_det=True, \
-)
-```
+
 
 ## FAQ (Frequently Asked Questions)
 
