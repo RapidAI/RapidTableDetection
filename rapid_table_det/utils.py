@@ -245,7 +245,7 @@ def ResizePad(img, target_size):
     left = (target_size - new_w) // 2
     right = (target_size - new_w) - left
     img1 = cv2.copyMakeBorder(
-        img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(255, 255, 255)
+        img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114)
     )
     return img1, new_w, new_h, left, top
 
@@ -475,6 +475,7 @@ def extract_table_img(img, lt, rt, rb, lb):
     warped = cv2.warpPerspective(img, M, (max_width, max_height))
 
     return warped
+
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))

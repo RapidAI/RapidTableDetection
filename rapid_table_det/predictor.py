@@ -1,5 +1,7 @@
 import time
 
+import cv2
+
 from rapid_table_det.utils import *
 
 MODEL_STAGES_PATTERN = {
@@ -28,6 +30,10 @@ class ObjectDetector:
         ori_h, ori_w = img.shape[:-1]
         img, im_shape, factor = self.img_preprocess(img, self.resize_shape)
         pre = self.model([img, factor])
+        result = self.img_postprocess(ori_h, ori_w, pre, score)
+        return result, time.time() - start
+
+    def img_postprocess(self, ori_h, ori_w, pre, score):
         result = []
         for item in pre[0]:
             cls, value, xmin, ymin, xmax, ymax = list(item)
@@ -41,7 +47,7 @@ class ObjectDetector:
             xmax = min(xmax, ori_w)
             ymax = min(ymax, ori_h)
             result.append([value, np.array([xmin, ymin, xmax, ymax])])
-        return result, time.time() - start
+        return result
 
     def img_preprocess(self, img, resize_shape=[928, 928]):
         im_info = {
@@ -56,6 +62,78 @@ class ObjectDetector:
         factor = im_info["scale_factor"].reshape((1, 2))
         im_shape = im_info["im_shape"].reshape((1, 2))
         return im, im_shape, factor
+
+
+class YoloDet:
+    def __init__(self, model_path, **kwargs):
+        self.model = OrtInferSession(model_path)
+        self.img_loader = LoadImage()
+        self.resize_shape = [928, 928]
+
+    def __call__(self, img, **kwargs):
+        start = time.time()
+        kwargs.get("score", 0.4)
+        img = self.img_loader(img)
+        ori_h, ori_w = img.shape[:-1]
+        img, new_w, new_h, left, top = self.img_preprocess(img, self.resize_shape)
+        pre = self.model([img])
+        result = self.img_postprocess(pre, new_w, new_h, left, top)
+        return result, time.time() - start
+
+    def img_preprocess(self, img, resize_shape=[928, 928]):
+        im_info = {
+            "scale_factor": np.array([1.0, 1.0], dtype=np.float32),
+            "im_shape": np.array(img.shape[:2], dtype=np.float32),
+        }
+        im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
+        im = im / 255.0
+        im = im.transpose((2, 0, 1)).copy()
+        im = im[None, :].astype("float32")
+        return im, new_w, new_h, left, top
+
+    def img_postprocess(self, predict_maps, new_w, new_h, left, top):
+        # postprocess(result_image, outputs, input_width, input_height, img_width, img_height)
+        # 转置和压缩输出以匹配预期的形状
+        outputs = np.transpose(np.squeeze(predict_maps[0]))
+        # 获取输出数组的行数
+        rows = outputs.shape[0]
+        # 用于存储检测的边界框、得分和类别ID的列表
+        boxes = []
+        scores = []
+        class_ids = []
+        # 计算边界框坐标的缩放因子
+        x_factor = img_width / input_width
+        y_factor = img_height / input_height
+        # 遍历输出数组的每一行
+        for i in range(rows):
+            # 从当前行提取类别得分
+            classes_scores = outputs[i][4:]
+            # 找到类别得分中的最大得分
+            max_score = np.amax(classes_scores)
+            # 如果最大得分高于置信度阈值
+            if max_score >= confidence_thres:
+                # 获取得分最高的类别ID
+                class_id = np.argmax(classes_scores)
+                # 从当前行提取边界框坐标
+                x, y, w, h = outputs[i][0], outputs[i][1], outputs[i][2], outputs[i][3]
+                # 计算边界框的缩放坐标
+                left = int((x - w / 2) * x_factor)
+                top = int((y - h / 2) * y_factor)
+                width = int(w * x_factor)
+                height = int(h * y_factor)
+                # 将类别ID、得分和框坐标添加到各自的列表中
+                class_ids.append(class_id)
+                scores.append(max_score)
+                boxes.append([left, top, width, height])
+                # 应用非最大抑制过滤重叠的边界框
+                indices = custom_NMSBoxes(boxes, scores, confidence_thres, iou_thres)
+        # 遍历非最大抑制后的选定索引
+        for i in indices:
+            # 根据索引获取框、得分和类别ID
+            boxes[i]
+            scores[i]
+            class_id = class_ids[i]
+            return resized_mask
 
 
 class DbNet:
@@ -73,12 +151,10 @@ class DbNet:
         img, resize_h, resize_w, left, top = self.img_preprocess(img, self.resize_shape)
         # with paddle.no_grad():
         predict_maps = self.model([img])
-        pred = self.postprocess(predict_maps)
+        pred = self.img_postprocess(predict_maps)
         if pred is None:
             return None, None, None, None, None, time.time() - start
-        # predict_maps = predicts.cpu()
-        # pred = np.squeeze(predict_maps[0])
-        segmentation = pred > 0.7
+        segmentation = pred > 0.8
         mask = np.array(segmentation).astype(np.uint8)
         # 找到最佳边缘box shape(4, 2)
         box = get_max_adjacent_bbox(mask)
@@ -94,8 +170,12 @@ class DbNet:
         else:
             return None, None, None, None, None, time.time() - start
 
+    def img_postprocess(self, predict_maps):
+        pred = np.squeeze(predict_maps[0])
+        return pred
+
     def adjust_coordinates(
-            self, box, left, top, resize_w, resize_h, destWidth, destHeight
+        self, box, left, top, resize_w, resize_h, destWidth, destHeight
     ):
         """
         调整边界框坐标，确保它们在合理范围内。
@@ -166,7 +246,11 @@ class DbNet:
         im = im[None, :].astype("float32")
         return im, new_h, new_w, left, top
 
-    def postprocess(self, predict_maps):
+
+class YoloSeg(DbNet):
+    model_key = "edge_det"
+
+    def img_postprocess(self, predict_maps):
         box_output = predict_maps[0]
         mask_output = predict_maps[1]
         predictions = np.squeeze(box_output).T
@@ -176,6 +260,7 @@ class DbNet:
         highest_score_index = scores.argmax()
         # 获取得分最高的预测结果
         highest_score_prediction = predictions[highest_score_index]
+        x, y, w, h = highest_score_prediction[:4]
         highest_score = highest_score_prediction[4]
         if highest_score < 0.7:
             return None
@@ -188,8 +273,28 @@ class DbNet:
         masks = masks.reshape((-1, mask_height, mask_width))
         # 提取第一个通道
         mask = masks[0]
+
+        # 计算缩小后的区域边界
+        small_w = 200
+        small_h = 200
+        small_x_min = max(0, int((x - w / 2) * small_w / 800))
+        small_x_max = min(small_w, int((x + w / 2) * small_w / 800))
+        small_y_min = max(0, int((y - h / 2) * small_h / 800))
+        small_y_max = min(small_h, int((y + h / 2) * small_h / 800))
+
+        # 创建一个全零的掩码
+        filtered_mask = np.zeros((small_h, small_w), dtype=np.float32)
+
+        # 将区域内的值复制到过滤后的掩码中
+        filtered_mask[small_y_min:small_y_max, small_x_min:small_x_max] = mask[
+            small_y_min:small_y_max, small_x_min:small_x_max
+        ]
+
         # 使用 OpenCV 进行放大，保持边缘清晰
-        return cv2.resize(mask, (800, 800), interpolation=cv2.INTER_NEAREST)
+        resized_mask = cv2.resize(
+            filtered_mask, (800, 800), interpolation=cv2.INTER_CUBIC
+        )
+        return resized_mask
 
 
 class PPLCNet:
