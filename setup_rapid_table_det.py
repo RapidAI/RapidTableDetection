@@ -43,7 +43,9 @@ setuptools.setup(
     url="https://github.com/Joker1212/RapidTableDetection",
     license="Apache-2.0",
     install_requires=read_txt("requirements.txt"),
-    include_package_data=True,
+    include_package_data=False,
+    packages=[MODULE_NAME, f"{MODULE_NAME}.models", f"{MODULE_NAME}.utils"],
+    package_data={"": [".gitkeep"]},
     keywords=["obj detection,ocr,table-recognition"],
     classifiers=[
         "Programming Language :: Python :: 3.8",
