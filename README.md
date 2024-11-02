@@ -14,14 +14,16 @@
 - **2024.10.15**
     - 完成初版代码，包含目标检测，语义分割，角点方向识别三个模块
 - **2024.11.2**
-    - 补充新训练yolo11的目标检测模型和边缘检测模型，增加自动下载，轻量化包体积，自由组合各个模块
+    - 补充新训练yolo11的目标检测模型和边缘检测模型
+    - 增加自动下载，轻量化包体积
+    - 补充onnx-gpu推理支持，给出benchmark测试结果
+    - 补充在线示例使用
 
 ### 简介
 
 💡✨ 强大且高效的表格检测，支持论文、期刊、杂志、发票、收据、签到单等各种表格。
 
-🚀 支持来源于paddle和yolo的版本，平衡速度和精度下单图 CPU 推理仅需 1.2 秒，onnx-GPU(V100) 最小组合仅需 0.4 秒,使用pt和paddle模型还能更快！(这个有需要后面再更新吧)
-
+🚀 支持来源于paddle和yolo的版本，默认模型组合单图 CPU 推理仅需 1.2 秒，onnx-GPU(V100) 最小组合仅需 0.4 秒,paddle-gpu版0.2s
 🛠️ 支持三个模块自由组合，独立训练调优，提供 ONNX 转换脚本和微调训练方案。
 
 🌟 whl 包轻松集成使用，为下游 OCR、表格识别和数据采集提供强力支撑。
@@ -86,7 +88,7 @@ use_cls_det=True,
 ``` python {linenos=table}
 from rapid_table_det.inference import TableDetector
 
-img_path = f"images/weixin.png"
+img_path = f"tests/test_files/chip.jpg"
 table_det = TableDetector()
 
 result, elapse = table_det(img_path)
@@ -103,6 +105,49 @@ print(
 # file_name_with_ext = os.path.basename(img_path)
 # file_name, file_ext = os.path.splitext(file_name_with_ext)
 # out_dir = "rapid_table_det/outputs"
+# if not os.path.exists(out_dir):
+#     os.makedirs(out_dir)
+# extract_img = img.copy()
+# for i, res in enumerate(result):
+#     box = res["box"]
+#     lt, rt, rb, lb = res["lt"], res["rt"], res["rb"], res["lb"]
+#     # 带识别框和左上角方向位置
+#     img = visuallize(img, box, lt, rt, rb, lb)
+#     # 透视变换提取表格图片
+#     wrapped_img = extract_table_img(extract_img.copy(), lt, rt, rb, lb)
+#     cv2.imwrite(f"{out_dir}/{file_name}-extract-{i}.jpg", wrapped_img)
+# cv2.imwrite(f"{out_dir}/{file_name}-visualize.jpg", img)
+
+```
+### paddle版本使用
+必须下载模型，指定模型位置！
+``` python {linenos=table}
+# 建议使用清华源安装 https://pypi.tuna.tsinghua.edu.cn/simple
+pip install rapid-table-det-paddle (默认安装gpu版本，可以自行覆盖安装cpu版本paddlepaddle)
+```
+```python
+from rapid_table_det_paddle.inference import TableDetector
+
+img_path = f"tests/test_files/chip.jpg"
+
+table_det = TableDetector(
+    obj_model_path="models/obj_det_paddle",
+    edge_model_path="models/edge_det_paddle",
+    cls_model_path="models/cls_det_paddle",
+    use_obj_det=True,
+    use_edge_det=True,
+    use_cls_det=True,
+)
+result, elapse = table_det(img_path)
+obj_det_elapse, edge_elapse, rotate_det_elapse = elapse
+print(
+    f"obj_det_elapse:{obj_det_elapse}, edge_elapse={edge_elapse}, rotate_det_elapse={rotate_det_elapse}"
+)
+# 一张图片中可能有多个表格
+# img = img_loader(img_path)
+# file_name_with_ext = os.path.basename(img_path)
+# file_name, file_ext = os.path.splitext(file_name_with_ext)
+# out_dir = "rapid_table_det_paddle/outputs"
 # if not os.path.exists(out_dir):
 #     os.makedirs(out_dir)
 # extract_img = img.copy()
