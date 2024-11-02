@@ -44,8 +44,6 @@ setuptools.setup(
     license="Apache-2.0",
     install_requires=read_txt("requirements.txt"),
     include_package_data=True,
-    packages=[MODULE_NAME, f"{MODULE_NAME}.models"],
-    package_data={"": ["*.onnx"]},
     keywords=["obj detection,ocr,table-recognition"],
     classifiers=[
         "Programming Language :: Python :: 3.8",
