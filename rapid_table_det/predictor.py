@@ -91,10 +91,7 @@ class YoloDet:
         return result, time.time() - start
 
     def img_preprocess(self, img, resize_shape=[928, 928]):
-        # im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
-        new_w, new_h = resize_shape
-        left, top = 0, 0
-        im = cv2.resize(img, resize_shape, cv2.INTER_LINEAR)
+        im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
         im = im / 255.0
         im = im.transpose((2, 0, 1)).copy()
         im = im[None, :].astype("float32")
@@ -118,8 +115,8 @@ class YoloDet:
                 # 从当前行提取边界框坐标
                 x, y, w, h = outputs[i][0], outputs[i][1], outputs[i][2], outputs[i][3]
                 # 计算边界框的缩放坐标
-                xmin = max(int((x - w / 2) * x_factor) - left, 0)
-                ymin = max(int((y - h / 2) * y_factor) - top, 0)
+                xmin = max(int((x - w / 2 - left) * x_factor), 0)
+                ymin = max(int((y - h / 2 - top) * y_factor), 0)
                 xmax = xmin + int(w * x_factor)
                 ymax = ymin + int(h * y_factor)
                 # 将类别ID、得分和框坐标添加到各自的列表中

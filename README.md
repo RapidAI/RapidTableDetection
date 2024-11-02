@@ -40,7 +40,7 @@
 🔍 使用在线体验找到适合你场景的模型组合
 
 ### 在线体验
-
+[modelscope](https://www.modelscope.cn/studios/jockerK/RapidTableDetDemo)
 ### 效果展示
 
 ![res_show.jpg](readme_resource/res_show.jpg)![res_show2.jpg](readme_resource/res_show2.jpg)
@@ -102,6 +102,7 @@ print(
 # from rapid_table_det.utils.visuallize import img_loader, visuallize, extract_table_img
 # 
 # img = img_loader(img_path)
+# img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 # file_name_with_ext = os.path.basename(img_path)
 # file_name, file_ext = os.path.splitext(file_name_with_ext)
 # out_dir = "rapid_table_det/outputs"
