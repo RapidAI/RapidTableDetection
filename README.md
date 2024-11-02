@@ -118,13 +118,11 @@ print(
 ## FAQ (Frequently Asked Questions)
 
 1. **问：如何微调模型适应特定场景?**
-   -
-   答：直接参考这个项目，有非常详细的可视化操作步骤,可以得到paddle的推理模型 [百度表格检测大赛](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL)
-
+   - 答：直接参考这个项目，有非常详细的可视化操作步骤,数据集也在里面，可以得到paddle的推理模型 [百度表格检测大赛](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL),
+   - yolo11的训练使用官方脚本足够简单，按官方指导转换为coco格式训练即可，有需要我的训练脚本可以留言，再考虑更新
 2. **问：如何导出onnx**
-    - 答：在本项目tools下，有onnx_transform.ipynb文件，可以照步骤执行(
-      因为pp-yoloe导出onnx有bug一直没修，这里我自己写了一个fix_onnx脚本改动onnx模型节点来临时解决了)
-
+    - 答：paddle模型需要在本项目tools下，有onnx_transform.ipynb文件
+      yolo11的话，直接参照官方的方式一行搞定  
 3. **问：图片有扭曲可以修正吗？**
     - 答：本项目只解决旋转和透视场景的表格提取，对于扭曲的场景，需要先进行扭曲修正
 
