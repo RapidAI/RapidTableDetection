@@ -1,35 +1,75 @@
 import os
 from pathlib import Path
+from typing import Union
 
 import cv2
 import numpy as np
 
-from rapid_table_det.predictor import DbNet, ObjectDetector, PPLCNet, YoloSeg, YoloDet
-from rapid_table_det.utils import LoadImage
+from .predictor import DbNet, PaddleYoloEDet, PPLCNet, YoloSeg, YoloDet
+from .utils.download_model import DownloadModel
+
+from .utils.logger import get_logger
+from .utils.load_image import LoadImage
 
 root_dir = Path(__file__).resolve().parent
 model_dir = os.path.join(root_dir, "models")
+
+ROOT_DIR = Path(__file__).resolve().parent
+logger = get_logger("rapid_layout")
+
+ROOT_URL = "https://www.modelscope.cn/models/jockerK/TableExtractor/resolve/master/rapid_table_det/models/"
+KEY_TO_MODEL_URL = {
+    "yolo_obj_det": f"{ROOT_URL}/yolo_obj_det.onnx",
+    "yolo_edge_det": f"{ROOT_URL}/yolo_edge_det.onnx",
+    "yolo_edge_det_s": f"{ROOT_URL}/yolo_edge_det_s.onnx",
+    "paddle_obj_det": f"{ROOT_URL}/paddle_obj_det.onnx",
+    "paddle_obj_det_s": f"{ROOT_URL}/paddle_obj_det_s.onnx",
+    "paddle_edge_det": f"{ROOT_URL}/paddle_edge_det.onnx",
+    "paddle_edge_det_s": f"{ROOT_URL}/paddle_edge_det_s.onnx",
+    "paddle_cls_det": f"{ROOT_URL}/paddle_cls_det.onnx",
+}
 
 
 class TableDetector:
     def __init__(
         self,
-        obj_model="yolo",
-        edge_model="yolo",
-        obj_model_path=os.path.join(model_dir, "obj_det_quantized.onnx"),
-        edge_model_path=os.path.join(model_dir, "yolo_edge_det_s.onnx"),
-        cls_model_path=os.path.join(model_dir, "cls_det.onnx"),
+        use_cuda=False,
+        use_dml=False,
+        obj_model_path=None,
+        edge_model_path=None,
+        cls_model_path=None,
+        obj_model_type="yolo_obj_det",
+        edge_model_type="yolo_edge_det",
+        cls_model_type="paddle_cls_det",
     ):
         self.img_loader = LoadImage()
-        if obj_model == "yolo":
-            self.obj_detector = YoloDet(obj_model_path)
+        obj_det_config = {
+            "model_path": self.get_model_path(obj_model_type, obj_model_path),
+            "use_cuda": use_cuda,
+            "use_dml": use_dml,
+        }
+        edge_det_config = {
+            "model_path": self.get_model_path(edge_model_type, edge_model_path),
+            "use_cuda": use_cuda,
+            "use_dml": use_dml,
+        }
+        cls_det_config = {
+            "model_path": self.get_model_path(cls_model_type, cls_model_path),
+            "use_cuda": use_cuda,
+            "use_dml": use_dml,
+        }
+        if "yolo" in obj_model_type:
+            self.obj_detector = YoloDet(obj_det_config)
         else:
-            self.obj_detector = ObjectDetector(obj_model_path)
-        if edge_model == "yolo":
-            self.dbnet = YoloSeg(edge_model_path)
+            self.obj_detector = PaddleYoloEDet(obj_det_config)
+        if "yolo" in edge_model_type:
+            self.dbnet = YoloSeg(edge_det_config)
         else:
-            self.dbnet = DbNet(edge_model_path)
-        self.pplcnet = PPLCNet(cls_model_path)
+            self.dbnet = DbNet(edge_det_config)
+        if "yolo" in cls_model_type:
+            self.pplcnet = PPLCNet(cls_det_config)
+        else:
+            self.pplcnet = PPLCNet(cls_det_config)
 
     def __call__(
         self,
@@ -101,6 +141,16 @@ class TableDetector:
         return obj_det_res, pred_label
 
     def add_pre_info_for_cls(self, cls_img, edge_box, xmin_cls, ymin_cls):
+        """
+        Args:
+            cls_img:
+            edge_box:
+            xmin_cls:
+            ymin_cls:
+
+        Returns: 带边缘划线的图片，给方向分类提供先验信息
+
+        """
         cls_box = edge_box.copy()
         cls_box[:, 0] = cls_box[:, 0] - xmin_cls
         cls_box[:, 1] = cls_box[:, 1] - ymin_cls
@@ -166,3 +216,18 @@ class TableDetector:
         ymax_edge = min(ymax + pad, h)
         xmax_edge = min(xmax + pad, w)
         return xmin_edge, ymin_edge, xmax_edge, ymax_edge
+
+    @staticmethod
+    def get_model_path(model_type: str, model_path: Union[str, Path, None]) -> str:
+        if model_path is not None:
+            return model_path
+
+        model_url = KEY_TO_MODEL_URL.get(model_type, None)
+        if model_url:
+            model_path = DownloadModel.download(model_url)
+            return model_path
+
+        logger.info(
+            "model url is None, using the default download model %s", model_path
+        )
+        return model_path

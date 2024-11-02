@@ -1,184 +1,7 @@
 import math
-import traceback
-from io import BytesIO
-from pathlib import Path
-from typing import List, Union
 import itertools
 import cv2
 import numpy as np
-from PIL import Image, UnidentifiedImageError
-from onnxruntime import InferenceSession
-from onnxruntime.capi.onnxruntime_pybind11_state import (
-    SessionOptions,
-    GraphOptimizationLevel,
-)
-
-root_dir = Path(__file__).resolve().parent
-InputType = Union[str, np.ndarray, bytes, Path]
-
-
-class LoadImage:
-    def __init__(
-        self,
-    ):
-        pass
-
-    def __call__(self, img: InputType) -> np.ndarray:
-        if not isinstance(img, InputType.__args__):
-            raise LoadImageError(
-                f"The img type {type(img)} does not in {InputType.__args__}"
-            )
-
-        img = self.load_img(img)
-        img = self.convert_img(img)
-        return img
-
-    def load_img(self, img: InputType) -> np.ndarray:
-        if isinstance(img, (str, Path)):
-            self.verify_exist(img)
-            try:
-                img = np.array(Image.open(img))
-            except UnidentifiedImageError as e:
-                raise LoadImageError(f"cannot identify image file {img}") from e
-            return img
-
-        if isinstance(img, bytes):
-            img = np.array(Image.open(BytesIO(img)))
-            return img
-
-        if isinstance(img, np.ndarray):
-            return img
-
-        raise LoadImageError(f"{type(img)} is not supported!")
-
-    def convert_img(self, img: np.ndarray):
-        if img.ndim == 2:
-            return cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-
-        if img.ndim == 3:
-            channel = img.shape[2]
-            if channel == 1:
-                return cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-
-            if channel == 2:
-                return self.cvt_two_to_three(img)
-
-            if channel == 4:
-                return self.cvt_four_to_three(img)
-
-            if channel == 3:
-                return cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
-            raise LoadImageError(
-                f"The channel({channel}) of the img is not in [1, 2, 3, 4]"
-            )
-
-        raise LoadImageError(f"The ndim({img.ndim}) of the img is not in [2, 3]")
-
-    @staticmethod
-    def cvt_four_to_three(img: np.ndarray) -> np.ndarray:
-        """RGBA → BGR"""
-        r, g, b, a = cv2.split(img)
-        new_img = cv2.merge((b, g, r))
-
-        not_a = cv2.bitwise_not(a)
-        not_a = cv2.cvtColor(not_a, cv2.COLOR_GRAY2BGR)
-
-        new_img = cv2.bitwise_and(new_img, new_img, mask=a)
-        new_img = cv2.add(new_img, not_a)
-        return new_img
-
-    @staticmethod
-    def cvt_two_to_three(img: np.ndarray) -> np.ndarray:
-        """gray + alpha → BGR"""
-        img_gray = img[..., 0]
-        img_bgr = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
-
-        img_alpha = img[..., 1]
-        not_a = cv2.bitwise_not(img_alpha)
-        not_a = cv2.cvtColor(not_a, cv2.COLOR_GRAY2BGR)
-
-        new_img = cv2.bitwise_and(img_bgr, img_bgr, mask=img_alpha)
-        new_img = cv2.add(new_img, not_a)
-        return new_img
-
-    @staticmethod
-    def verify_exist(file_path: Union[str, Path]):
-        if not Path(file_path).exists():
-            raise LoadImageError(f"{file_path} does not exist.")
-
-
-img_loader = LoadImage()
-
-
-class LoadImageError(Exception):
-    pass
-
-
-class OrtInferSession:
-    def __init__(self, model_path: Union[str, Path], num_threads: int = -1):
-        self.verify_exist(model_path)
-
-        self.num_threads = num_threads
-        self._init_sess_opt()
-
-        cpu_ep = "CPUExecutionProvider"
-        cpu_provider_options = {
-            "arena_extend_strategy": "kSameAsRequested",
-        }
-        EP_list = [(cpu_ep, cpu_provider_options)]
-        try:
-            self.session = InferenceSession(
-                str(model_path), sess_options=self.sess_opt, providers=EP_list
-            )
-        except TypeError:
-            # 这里兼容ort 1.5.2
-            self.session = InferenceSession(str(model_path), sess_options=self.sess_opt)
-
-    def _init_sess_opt(self):
-        self.sess_opt = SessionOptions()
-        self.sess_opt.log_severity_level = 4
-        self.sess_opt.enable_cpu_mem_arena = False
-
-        if self.num_threads != -1:
-            self.sess_opt.intra_op_num_threads = self.num_threads
-
-        self.sess_opt.graph_optimization_level = GraphOptimizationLevel.ORT_ENABLE_ALL
-
-    def __call__(self, input_content: List[np.ndarray]) -> np.ndarray:
-        input_dict = dict(zip(self.get_input_names(), input_content))
-        try:
-            return self.session.run(None, input_dict)
-        except Exception as e:
-            error_info = traceback.format_exc()
-            raise ONNXRuntimeError(error_info) from e
-
-    def get_input_names(
-        self,
-    ):
-        return [v.name for v in self.session.get_inputs()]
-
-    def get_output_name(self, output_idx=0):
-        return self.session.get_outputs()[output_idx].name
-
-    def get_metadata(self):
-        meta_dict = self.session.get_modelmeta().custom_metadata_map
-        return meta_dict
-
-    @staticmethod
-    def verify_exist(model_path: Union[Path, str]):
-        if not isinstance(model_path, Path):
-            model_path = Path(model_path)
-
-        if not model_path.exists():
-            raise FileNotFoundError(f"{model_path} does not exist!")
-
-        if not model_path.is_file():
-            raise FileExistsError(f"{model_path} must be a file")
-
-
-class ONNXRuntimeError(Exception):
-    pass
 
 
 def generate_scale(im, resize_shape, keep_ratio):
@@ -418,64 +241,74 @@ def get_max_adjacent_bbox(mask):
         return np.array(target_box).reshape([-1, 2])
 
 
-def visuallize(img, box, lt, rt, rb, lb):
-    xmin, ymin, xmax, ymax = box
-    draw_box = np.array([lt, rt, rb, lb]).reshape([-1, 2])
-    cv2.circle(img, (int(lt[0]), int(lt[1])), 50, (255, 0, 0), 10)
-    cv2.rectangle(img, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (255, 0, 0), 10)
-    cv2.polylines(
-        img,
-        [np.array(draw_box).astype(np.int32).reshape((-1, 1, 2))],
-        True,
-        color=(255, 0, 255),
-        thickness=6,
-    )
-    return img
-
-
-def extract_table_img(img, lt, rt, rb, lb):
-    """
-    根据四个角点进行透视变换，并提取出角点区域的图片。
-
-    参数:
-    img (numpy.ndarray): 输入图像
-    lt (numpy.ndarray): 左上角坐标
-    rt (numpy.ndarray): 右上角坐标
-    lb (numpy.ndarray): 左下角坐标
-    rb (numpy.ndarray): 右下角坐标
-
-    返回:
-    numpy.ndarray: 提取出的角点区域图片
-    """
-    # 源点坐标
-    src_points = np.float32([lt, rt, lb, rb])
-
-    # 目标点坐标
-    width_a = np.sqrt(((rb[0] - lb[0]) ** 2) + ((rb[1] - lb[1]) ** 2))
-    width_b = np.sqrt(((rt[0] - lt[0]) ** 2) + ((rt[1] - lt[1]) ** 2))
-    max_width = max(int(width_a), int(width_b))
-
-    height_a = np.sqrt(((rt[0] - rb[0]) ** 2) + ((rt[1] - rb[1]) ** 2))
-    height_b = np.sqrt(((lt[0] - lb[0]) ** 2) + ((lt[1] - lb[1]) ** 2))
-    max_height = max(int(height_a), int(height_b))
-
-    dst_points = np.float32(
-        [
-            [0, 0],
-            [max_width - 1, 0],
-            [0, max_height - 1],
-            [max_width - 1, max_height - 1],
-        ]
-    )
-
-    # 获取透视变换矩阵
-    M = cv2.getPerspectiveTransform(src_points, dst_points)
-
-    # 应用透视变换
-    warped = cv2.warpPerspective(img, M, (max_width, max_height))
-
-    return warped
-
-
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
+
+
+def calculate_iou(box, other_boxes):
+    """
+    计算给定边界框与一组其他边界框之间的交并比（IoU）。
+
+    参数：
+    - box: 单个边界框，格式为 [x1, y1, width, height]。
+    - other_boxes: 其他边界框的数组，每个边界框的格式也为 [x1, y1, width, height]。
+
+    返回值：
+    - iou: 一个数组，包含给定边界框与每个其他边界框的IoU值。
+    """
+
+    # 计算交集的左上角坐标
+    x1 = np.maximum(box[0], np.array(other_boxes)[:, 0])
+    y1 = np.maximum(box[1], np.array(other_boxes)[:, 1])
+    # 计算交集的右下角坐标
+    x2 = np.minimum(box[2], np.array(other_boxes)[:, 2])
+    y2 = np.minimum(box[3], np.array(other_boxes)[:, 3])
+    # 计算交集区域的面积
+    intersection_area = np.maximum(0, x2 - x1) * np.maximum(0, y2 - y1)
+    # 计算给定边界框的面积
+    box_area = (box[2] - box[0]) * (box[3] - box[1])
+    # 计算其他边界框的面积
+    other_boxes_area = np.array(other_boxes[:, 2] - other_boxes[:, 0]) * np.array(
+        other_boxes[:, 3] - other_boxes[:, 1]
+    )
+    # 计算IoU值
+    iou = intersection_area / (box_area + other_boxes_area - intersection_area)
+    return iou
+
+
+def custom_NMSBoxes(boxes, scores, iou_threshold=0.4):
+    # 如果没有边界框，则直接返回空列表
+    if len(boxes) == 0:
+        return []
+    # 将得分和边界框转换为NumPy数组
+    scores = np.array(scores)
+    boxes = np.array(boxes)
+    # 根据置信度阈值过滤边界框
+    # filtered_boxes = boxes[mask]
+    # filtered_scores = scores[mask]
+    # 如果过滤后没有边界框，则返回空列表
+    if len(boxes) == 0:
+        return []
+    # 根据置信度得分对边界框进行排序
+    sorted_indices = np.argsort(scores)[::-1]
+    # 初始化一个空列表来存储选择的边界框索引
+    indices = []
+    # 当还有未处理的边界框时，循环继续
+    while len(sorted_indices) > 0:
+        # 选择得分最高的边界框索引
+        current_index = sorted_indices[0]
+        indices.append(current_index)
+        # 如果只剩一个边界框，则结束循环
+        if len(sorted_indices) == 1:
+            break
+        # 获取当前边界框和其他边界框
+        current_box = boxes[current_index]
+        other_boxes = boxes[sorted_indices[1:]]
+        # 计算当前边界框与其他边界框的IoU
+        iou = calculate_iou(current_box, other_boxes)
+        # 找到IoU低于阈值的边界框，即与当前边界框不重叠的边界框
+        non_overlapping_indices = np.where(iou <= iou_threshold)[0]
+        # 更新sorted_indices以仅包含不重叠的边界框
+        sorted_indices = sorted_indices[non_overlapping_indices + 1]
+    # 返回选择的边界框索引
+    return indices

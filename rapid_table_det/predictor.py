@@ -1,25 +1,33 @@
 import time
+from pathlib import Path
 
 import cv2
+import numpy as np
+from typing import Dict, Any
 
-from rapid_table_det.utils import *
+from .utils.infer_engine import OrtInferSession
+from .utils.load_image import LoadImage
+from .utils.transform import (
+    custom_NMSBoxes,
+    resize,
+    pad,
+    ResizePad,
+    sigmoid,
+    get_max_adjacent_bbox,
+)
 
 MODEL_STAGES_PATTERN = {
     "PPLCNet": ["blocks2", "blocks3", "blocks4", "blocks5", "blocks6"]
 }
 root_dir = Path(__file__).resolve().parent
 root_dir_str = str(root_dir)
-# https://github.com/RapidAI/TableStructureRec/releases/download/v0.0.0/lineless_table_rec_models.zip
-# obj_model_path = f"{root_dir_str}/obj_det.onnx"
-# dbnet_model_path = f"{root_dir_str}/edge_det.onnx"
-# pplcnet_model_path = f"{root_dir_str}/cls_det.onnx"
 
 
-class ObjectDetector:
+class PaddleYoloEDet:
     model_key = "obj_det"
 
-    def __init__(self, model_path, **kwargs):
-        self.model = OrtInferSession(model_path)
+    def __init__(self, config: Dict[str, Any]):
+        self.model = OrtInferSession(config)
         self.img_loader = LoadImage()
         self.resize_shape = [928, 928]
 
@@ -65,34 +73,35 @@ class ObjectDetector:
 
 
 class YoloDet:
-    def __init__(self, model_path, **kwargs):
-        self.model = OrtInferSession(model_path)
+    def __init__(self, config: Dict[str, Any]):
+        self.model = OrtInferSession(config)
         self.img_loader = LoadImage()
         self.resize_shape = [928, 928]
 
     def __call__(self, img, **kwargs):
         start = time.time()
-        kwargs.get("score", 0.4)
+        score = kwargs.get("score", 0.4)
         img = self.img_loader(img)
         ori_h, ori_w = img.shape[:-1]
         img, new_w, new_h, left, top = self.img_preprocess(img, self.resize_shape)
         pre = self.model([img])
-        result = self.img_postprocess(pre, new_w, new_h, left, top)
+        result = self.img_postprocess(
+            pre, ori_w / new_w, ori_h / new_h, left, top, score
+        )
         return result, time.time() - start
 
     def img_preprocess(self, img, resize_shape=[928, 928]):
-        im_info = {
-            "scale_factor": np.array([1.0, 1.0], dtype=np.float32),
-            "im_shape": np.array(img.shape[:2], dtype=np.float32),
-        }
-        im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
+        # im, new_w, new_h, left, top = ResizePad(img, resize_shape[0])
+        new_w, new_h = resize_shape
+        left, top = 0, 0
+        im = cv2.resize(img, resize_shape, cv2.INTER_LINEAR)
         im = im / 255.0
         im = im.transpose((2, 0, 1)).copy()
         im = im[None, :].astype("float32")
         return im, new_w, new_h, left, top
 
-    def img_postprocess(self, predict_maps, new_w, new_h, left, top):
-        # postprocess(result_image, outputs, input_width, input_height, img_width, img_height)
+    def img_postprocess(self, predict_maps, x_factor, y_factor, left, top, score):
+        result = []
         # 转置和压缩输出以匹配预期的形状
         outputs = np.transpose(np.squeeze(predict_maps[0]))
         # 获取输出数组的行数
@@ -100,47 +109,34 @@ class YoloDet:
         # 用于存储检测的边界框、得分和类别ID的列表
         boxes = []
         scores = []
-        class_ids = []
-        # 计算边界框坐标的缩放因子
-        x_factor = img_width / input_width
-        y_factor = img_height / input_height
         # 遍历输出数组的每一行
         for i in range(rows):
-            # 从当前行提取类别得分
-            classes_scores = outputs[i][4:]
             # 找到类别得分中的最大得分
-            max_score = np.amax(classes_scores)
+            max_score = outputs[i][4]
             # 如果最大得分高于置信度阈值
-            if max_score >= confidence_thres:
-                # 获取得分最高的类别ID
-                class_id = np.argmax(classes_scores)
+            if max_score >= score:
                 # 从当前行提取边界框坐标
                 x, y, w, h = outputs[i][0], outputs[i][1], outputs[i][2], outputs[i][3]
                 # 计算边界框的缩放坐标
-                left = int((x - w / 2) * x_factor)
-                top = int((y - h / 2) * y_factor)
-                width = int(w * x_factor)
-                height = int(h * y_factor)
+                xmin = max(int((x - w / 2) * x_factor) - left, 0)
+                ymin = max(int((y - h / 2) * y_factor) - top, 0)
+                xmax = xmin + int(w * x_factor)
+                ymax = ymin + int(h * y_factor)
                 # 将类别ID、得分和框坐标添加到各自的列表中
-                class_ids.append(class_id)
+                boxes.append([xmin, ymin, xmax, ymax])
                 scores.append(max_score)
-                boxes.append([left, top, width, height])
                 # 应用非最大抑制过滤重叠的边界框
-                indices = custom_NMSBoxes(boxes, scores, confidence_thres, iou_thres)
-        # 遍历非最大抑制后的选定索引
+        indices = custom_NMSBoxes(boxes, scores)
         for i in indices:
-            # 根据索引获取框、得分和类别ID
-            boxes[i]
-            scores[i]
-            class_id = class_ids[i]
-            return resized_mask
+            result.append([scores[i], np.array(boxes[i])])
+        return result
 
 
 class DbNet:
     model_key = "edge_det"
 
-    def __init__(self, model_path, **kwargs):
-        self.model = OrtInferSession(model_path)
+    def __init__(self, config: Dict[str, Any]):
+        self.model = OrtInferSession(config)
         self.img_loader = LoadImage()
         self.resize_shape = [800, 800]
 
@@ -300,8 +296,8 @@ class YoloSeg(DbNet):
 class PPLCNet:
     model_key = "cls_det"
 
-    def __init__(self, model_path, **kwargs):
-        self.model = OrtInferSession(model_path)
+    def __init__(self, config: Dict[str, Any]):
+        self.model = OrtInferSession(config)
         self.img_loader = LoadImage()
         self.resize_shape = [624, 624]
 
