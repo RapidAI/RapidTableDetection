@@ -119,7 +119,7 @@ print(
 
 1. **问：如何微调模型适应特定场景?**
    - 答：直接参考这个项目，有非常详细的可视化操作步骤,数据集也在里面，可以得到paddle的推理模型 [百度表格检测大赛](https://aistudio.baidu.com/projectdetail/5398861?searchKeyword=%E8%A1%A8%E6%A0%BC%E6%A3%80%E6%B5%8B%E5%A4%A7%E8%B5%9B&searchTab=ALL),
-   - yolo11的训练使用官方脚本足够简单，按官方指导转换为coco格式训练即可，有需要我的训练脚本可以留言，再考虑更新
+   - yolo11的训练使用官方脚本足够简单，按官方指导转换为coco格式训练即可
 2. **问：如何导出onnx**
     - 答：paddle模型需要在本项目tools下，有onnx_transform.ipynb文件
       yolo11的话，直接参照官方的方式一行搞定  
