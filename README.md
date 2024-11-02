@@ -20,7 +20,7 @@
 
 💡✨ 强大且高效的表格检测，支持论文、期刊、杂志、发票、收据、签到单等各种表格。
 
-🚀 支持来源于paddle和yolo的版本，平衡速度和精度下单图 CPU 推理仅需 1 秒，Paddle-GPU(V100) 仅需 0.2 秒。
+🚀 支持来源于paddle和yolo的版本，平衡速度和精度下单图 CPU 推理仅需 1.2 秒，onnx-GPU(V100) 最小组合仅需 0.4 秒,使用pt和paddle模型还能更快！(这个有需要后面再更新吧)
 
 🛠️ 支持三个模块自由组合，独立训练调优，提供 ONNX 转换脚本和微调训练方案。
 
@@ -60,16 +60,19 @@ obj_model_type="yolo_obj_det", \
 edge_model_type= "yolo_edge_det", \
 cls_model_type= "paddle_cls_det"
 
-| `model_type`         | 任务类型   | 训练来源                                 | 大小     | 单表格耗时                 |
-|:---------------------|:-------|:-------------------------------------|:-------|:----------------------|
-| **yolo_obj_det**     | 表格目标检测 | `yolo11-l`                           | `100m` | `cpu:500ms, gpu:0.2`  |
-| `paddle_obj_det`     | 表格目标检测 | `paddle yoloe-plus-x`                | `380m` | `cpu:500ms, gpu:0.2`  |
-| `paddle_obj_det_s`   | 表格目标检测 | `paddle yoloe-plus-x + quantization` | `95m`  | `cpu:1000ms, gpu:0.2` |
-| **yolo_edge_det**    | 语义分割   | `yolo11-l-segment`                   | `108m` | `cpu:500ms, gpu:0.2`  |
-| `yolo_edge_det_s`    | 语义分割   | `yolo11-s-segment`                   | `11m`  | `cpu:100ms, gpu:0.2`  |
-| `paddle_edge_det`    | 语义分割   | `paddle-dbnet`                       | `99m`  | `cpu:600ms, gpu:0.2`  |
-| `paddle_edge_det_s`  | 语义分割   | `paddle-dbnet + quantization`        | `25m`  | `cpu:500ms, gpu:0.2`  |
-| **paddle_cls_det**     | 方向分类   | `paddle pplcnet`                     | `6.5m` | `cpu:70ms, gpu:0.2`   |
+由于onnx使用gpu加速效果有限，还是建议直接使用yolox或安装paddle来执行模型会快很多(有需要我再补充整体流程)
+paddle的s模型由于量化导致反而速度降低和精度降低，但是模型大小减少很多
+
+| `model_type`         | 任务类型   | 训练来源                                 | 大小     | 单表格耗时(v100-16G,cuda12,cudnn9,ubuntu) |
+|:---------------------|:-------|:-------------------------------------|:-------|:-------------------------------------|
+| **yolo_obj_det**     | 表格目标检测 | `yolo11-l`                           | `100m` | `cpu:570ms, gpu:400ms`               |
+| `paddle_obj_det`     | 表格目标检测 | `paddle yoloe-plus-x`                | `380m` | `cpu:1000ms, gpu:300ms`              |
+| `paddle_obj_det_s`   | 表格目标检测 | `paddle yoloe-plus-x + quantization` | `95m`  | `cpu:1200ms, gpu:1000ms`             |
+| **yolo_edge_det**    | 语义分割   | `yolo11-l-segment`                   | `108m` | `cpu:570ms, gpu:200ms`               |
+| `yolo_edge_det_s`    | 语义分割   | `yolo11-s-segment`                   | `11m`  | `cpu:260ms, gpu:200ms`               |
+| `paddle_edge_det`    | 语义分割   | `paddle-dbnet`                       | `99m`  | `cpu:1200ms, gpu:120ms`              |
+| `paddle_edge_det_s`  | 语义分割   | `paddle-dbnet + quantization`        | `25m`  | `cpu:860ms, gpu:760ms`               |
+| **paddle_cls_det**     | 方向分类   | `paddle pplcnet`                     | `6.5m` | `cpu:70ms, gpu:60ms`                 |
 
 
 执行参数
