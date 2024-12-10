@@ -1,6 +1,6 @@
 from rapid_table_det.inference import TableDetector
 
-img_path = f"images/WechatIMG149.jpeg"
+img_path = f"images/0c35d6430193babb29c6a94711742531-1_rot2_noise.jpg"
 table_det = TableDetector(
     edge_model_type="yolo_edge_det", obj_model_type="yolo_obj_det"
 )
@@ -16,7 +16,6 @@ import cv2
 from rapid_table_det.utils.visuallize import img_loader, visuallize, extract_table_img
 
 img = img_loader(img_path)
-img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 file_name_with_ext = os.path.basename(img_path)
 file_name, file_ext = os.path.splitext(file_name_with_ext)
 out_dir = "rapid_table_det/outputs"

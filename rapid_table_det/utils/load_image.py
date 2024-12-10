@@ -25,8 +25,6 @@ class LoadImage:
 
         origin_img_type = type(img)
         img = self.load_img(img)
-        if img.ndim == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         img = self.convert_img(img, origin_img_type)
         return img
 
